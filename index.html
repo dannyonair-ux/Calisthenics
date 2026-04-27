@@ -176,6 +176,22 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .hist-ex:last-child{border-bottom:none}
 .hist-sets-detail{font-size:11px;color:var(--muted);text-align:right}
 .empty-hist{text-align:center;color:var(--muted);font-size:14px;padding:48px 0;line-height:2}
+  #splash .logo {
+    font-size: 8vw; /* Il testo userà l'8% della larghezza dello schermo */
+    white-space: nowrap; /* Impedisce al testo di andare a capo male */
+    overflow: hidden;
+}
+
+#splash .sub {
+    font-size: 4vw; /* Sottotitolo più piccolo proporzionalmente */
+}
+
+/* Se vuoi essere ancora più preciso per i cellulari piccoli */
+@media (max-width: 480px) {
+    #splash .logo {
+        font-size: 32px; /* Dimensione massima fissa per schermi piccoli */
+    }
+}
 </style>
 </head>
 <body>
