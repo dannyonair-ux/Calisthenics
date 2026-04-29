@@ -26,8 +26,8 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 
 /* SPLASH */
 #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:10px;transition:opacity 0.5s}
-#splash .logo{font-family:var(--fh);font-size:52px;font-weight:800;color:var(--accent);letter-spacing:-2px}
-#splash .sub{font-size:11px;color:var(--muted);letter-spacing:3px}
+#splash .logo{font-family:var(--fh);font-size:clamp(28px,10vw,52px);font-weight:800;color:var(--accent);letter-spacing:-2px;text-align:center;padding:0 16px}
+#splash .sub{font-size:clamp(9px,3vw,11px);color:var(--muted);letter-spacing:3px;text-align:center;padding:0 16px}
 #splash.hide{opacity:0;pointer-events:none}
 
 /* APP SHELL - fixed layout, scroll only inside content */
@@ -1110,9 +1110,13 @@ function renderDay(){
     </div>`;
   });
 
-  html+=`<div class="phase-card" style="margin-top:10px">
+ html+=`<div class="phase-card" style="margin-top:10px">
     <div class="phase-label">❄️ DEFATICAMENTO</div>
     ${renderWarmup(day.cooldown)}
+  </div>
+  <div style="margin-top:10px">
+    ${renderExtras(currentDay)}
+    <button onclick="openExtraModal(${currentDay})" style="width:100%;padding:13px;background:none;border:1px dashed var(--border);border-radius:var(--r);color:var(--muted);font-family:var(--fm);font-size:13px;cursor:pointer;margin-top:8px">＋ Aggiungi esercizio extra</button>
   </div>`;
 
   area.innerHTML=html;
@@ -1228,6 +1232,34 @@ function renderHistory(){
 }
 
 // ─── INIT ────────────────────────────────────────────────────
+  function renderExtras(di){
+  const key='extras_'+todayStr()+'_d'+di;
+  const extras=state[key]||[];
+  if(!extras.length) return '';
+  return extras.map((ex,i)=>`
+    <div style="background:var(--surface);border:1px solid rgba(200,245,90,0.2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
+      <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">⭐ ${ex.name}</div>
+      <div style="font-size:12px;color:var(--muted)">${ex.sets.map((r,s)=>'S'+(s+1)+': '+r+(ex.iso?'s':'×')).join(' · ')}</div>
+    </div>`).join('');
+}
+
+function openExtraModal(di){
+  const name=prompt('Nome esercizio extra (es. Plank aggiuntivo):');
+  if(!name||!name.trim()) return;
+  const setsN=parseInt(prompt('Quante serie?')||'1');
+  if(!setsN||setsN<1) return;
+  const iso=confirm('È isometrico (tempo in secondi)? OK = sì, Annulla = no (ripetizioni)');
+  const sets=[];
+  for(let s=0;s<setsN;s++){
+    const v=parseInt(prompt(`Serie ${s+1} — ${iso?'secondi':'ripetizioni'}:`)||'0');
+    sets.push(v||0);
+  }
+  const key='extras_'+todayStr()+'_d'+di;
+  if(!state[key]) state[key]=[];
+  state[key].push({name:name.trim(),sets,iso});
+  saveState();
+  renderAll();
+}
 function renderAll(){ renderTabs(); renderDay(); renderStreak(); }
 function updateDate(){ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); }
 
