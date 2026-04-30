@@ -1226,6 +1226,12 @@ function renderHistory(){
       }
       if(sets.length) exH+=`<div class="hist-ex"><span>${ex.name}</span><span class="hist-sets-detail">${sets.map((v,i)=>'S'+(i+1)+':'+v+(ex.iso?'s':'×')).join(' ')}</span></div>`;
     });
+    // Extra esercizi
+    const extraKey='extras_'+ds+'_d'+di;
+    const extras=state[extraKey]||[];
+    extras.forEach(ex=>{
+      exH+=`<div class="hist-ex" style="border-color:rgba(200,245,90,0.15)"><span style="color:var(--accent)">⭐ ${ex.name}</span><span class="hist-sets-detail">${ex.sets.map((v,s)=>'S'+(s+1)+':'+v+(ex.iso?'s':'×')).join(' ')}</span></div>`;
+    });
     if(exH) entries.push(`<div class="hist-entry"><div class="hist-day">${day.name} — ${day.title||''}</div><div class="hist-date">${df}</div>${exH}</div>`);
   });
   el.innerHTML=entries.join('')||'<div class="empty-hist">Nessun dato registrato.</div>';
