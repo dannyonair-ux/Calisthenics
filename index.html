@@ -1330,14 +1330,15 @@ function openExtraModal(di){
 let timerInterval = null;
 let timerState = null; // {type:'rest'|'exec', total, remaining, exCardId}
 
-function startTimer(type, seconds, exCardId){
-  clearTimer();
-  function startIsoTimer(di, ci){
+function startIsoTimer(di, ci){
   const chain = DAYS[di].exercises[ci].chain;
   const ex = getExDef(chain);
   const targetSecs = ex.reps || 30;
   startTimer('exec', targetSecs, ci);
 }
+
+function startTimer(type, seconds, exCardId){
+  clearTimer();
   timerState = {type, total:seconds, remaining:seconds, exCardId};
   renderTimerInCard(exCardId);
   timerInterval = setInterval(()=>{
