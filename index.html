@@ -176,6 +176,18 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .hist-ex:last-child{border-bottom:none}
 .hist-sets-detail{font-size:11px;color:var(--muted);text-align:right}
 .empty-hist{text-align:center;color:var(--muted);font-size:14px;padding:48px 0;line-height:2}
+  /* TIMER */
+.timer-bar{background:var(--surface2);border-radius:0 0 var(--r) var(--r);padding:10px 14px;border-top:1px solid var(--border)}
+.timer-display{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.timer-countdown{font-family:var(--fh);font-size:28px;font-weight:800;color:var(--accent);min-width:60px}
+.timer-countdown.warning{color:var(--legs)}
+.timer-countdown.urgent{color:var(--push)}
+.timer-label{font-size:10px;color:var(--muted);letter-spacing:1.5px;font-family:var(--fh)}
+.timer-track{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+.timer-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.9s linear}
+.timer-fill.warning{background:var(--legs)}
+.timer-fill.urgent{background:var(--push)}
+.iso-start-btn{width:100%;padding:11px;background:rgba(200,245,90,0.1);border:1px solid rgba(200,245,90,0.3);border-radius:var(--r-sm);color:var(--accent);font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;margin-top:8px}
 </style>
 </head>
 <body>
@@ -1135,10 +1147,12 @@ function renderDay(){
           </div>`:''}
           ${isMax?`<div class="next-box"><div class="next-label">🏆 LIVELLO MASSIMO</div><div class="next-name">Hai raggiunto la vetta di questa catena!</div></div>`:''}
         </div>
-        <div class="log-section">
+       <div class="log-section">
           <div class="log-label">REGISTRA LE SERIE</div>
           <div class="log-sets">${setsHtml}</div>
+          ${ex.iso?`<button class="iso-start-btn" onclick="event.stopPropagation();startIsoTimer(${currentDay},${ci})">▶ Avvia timer esecuzione</button>`:''}
         </div>
+        <div id="timer-${ci}"></div>
       </div>
     </div>`;
   });
@@ -1192,11 +1206,14 @@ function confirmRep(){
     const newEx=getExDef(chain);
     showToast('🆙 Livello salito! → '+newEx.name);
   }
+  const restSecs = getRestSeconds(chain);
+  const cardId = ci;
   renderAll();
   setTimeout(()=>{
     const card=document.getElementById('exc-'+ci);
     const det=document.getElementById('exd-'+ci);
     if(card&&det){ card.classList.add('open'); det.style.maxHeight='800px'; }
+    startTimer('rest', restSecs, cardId);
   },60);
 }
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
@@ -1308,6 +1325,88 @@ function openExtraModal(di){
   state[key].push({name:name.trim(),sets,iso});
   saveState();
   renderAll();
+}
+  // ─── TIMER ───────────────────────────────────────────────────
+let timerInterval = null;
+let timerState = null; // {type:'rest'|'exec', total, remaining, exCardId}
+
+function startTimer(type, seconds, exCardId){
+  clearTimer();
+  function startIsoTimer(di, ci){
+  const chain = DAYS[di].exercises[ci].chain;
+  const ex = getExDef(chain);
+  const targetSecs = ex.reps || 30;
+  startTimer('exec', targetSecs, ci);
+}
+  timerState = {type, total:seconds, remaining:seconds, exCardId};
+  renderTimerInCard(exCardId);
+  timerInterval = setInterval(()=>{
+    timerState.remaining--;
+    if(timerState.remaining <= 0){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      vibrate();
+      if(timerState.type === 'exec'){
+        // esecuzione finita → apri modal per inserire il dato
+        // il timer di riposo partirà dopo confirmRep
+        timerState = null;
+        renderTimerInCard(exCardId);
+      } else {
+        // riposo finito
+        timerState = null;
+        renderTimerInCard(exCardId);
+        vibrate();
+      }
+    } else {
+      renderTimerInCard(exCardId);
+    }
+  }, 1000);
+}
+
+function clearTimer(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+  timerState=null;
+}
+
+function vibrate(){
+  if(navigator.vibrate) navigator.vibrate([100,50,100]);
+}
+
+function getRestSeconds(chain){
+  const ex = getExDef(chain);
+  if(!ex) return 90;
+  const r = ex.rest||'';
+  if(r.includes('2 min')) return 120;
+  if(r.includes('90')) return 90;
+  if(r.includes('60')) return 60;
+  return 90;
+}
+
+function renderTimerInCard(exCardId){
+  const el = document.getElementById('timer-'+exCardId);
+  if(!el) return;
+  if(!timerState || timerState.exCardId !== exCardId){
+    el.innerHTML=''; return;
+  }
+  const {type, total, remaining} = timerState;
+  const pct = Math.round((remaining/total)*100);
+  const mins = Math.floor(remaining/60);
+  const secs = remaining%60;
+  const display = mins>0 ? `${mins}:${secs.toString().padStart(2,'0')}` : `${remaining}`;
+  const urgentClass = remaining<=5?'urgent':remaining<=10?'warning':'';
+  const label = type==='exec'?'TIENI LA POSIZIONE':'RIPOSO';
+  const fillColor = type==='exec'?'background:var(--core)':'';
+  el.innerHTML=`
+    <div class="timer-bar">
+      <div class="timer-label">${label}</div>
+      <div class="timer-display">
+        <div class="timer-countdown ${urgentClass}">${display}"</div>
+        <div style="font-size:11px;color:var(--muted)">${type==='rest'?'poi riparte':'poi inserisci'}</div>
+      </div>
+      <div class="timer-track">
+        <div class="timer-fill ${urgentClass}" style="width:${pct}%;${fillColor}"></div>
+      </div>
+    </div>`;
 }
 function renderAll(){ renderTabs(); renderDay(); renderStreak(); }
 function updateDate(){ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); }
