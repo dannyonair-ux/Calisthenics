@@ -1326,51 +1326,39 @@ function openExtraModal(di){
   saveState();
   renderAll();
 }
-  // ─── TIMER ───────────────────────────────────────────────────
+// ─── TIMER ───────────────────────────────────────────────────
 let timerInterval = null;
-let timerState = null; // {type:'rest'|'exec', total, remaining, exCardId}
+let timerState = null;
+let wakeLock = null;
 
-function startIsoTimer(di, ci){
-  const chain = DAYS[di].exercises[ci].chain;
-  const ex = getExDef(chain);
-  const targetSecs = ex.reps || 30;
-  startTimer('exec', targetSecs, ci);
-}
-
-function startTimer(type, seconds, exCardId){
-  clearTimer();
-  timerState = {type, total:seconds, remaining:seconds, exCardId};
-  renderTimerInCard(exCardId);
-  timerInterval = setInterval(()=>{
-    timerState.remaining--;
-    if(timerState.remaining <= 0){
-      clearInterval(timerInterval);
-      timerInterval = null;
-      vibrate();
-      if(timerState.type === 'exec'){
-        // esecuzione finita → apri modal per inserire il dato
-        // il timer di riposo partirà dopo confirmRep
-        timerState = null;
-        renderTimerInCard(exCardId);
-      } else {
-        // riposo finito
-        timerState = null;
-        renderTimerInCard(exCardId);
-        vibrate();
-      }
-    } else {
-      renderTimerInCard(exCardId);
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
     }
-  }, 1000);
+  }catch(e){}
+}
+function releaseWakeLock(){
+  if(wakeLock){ wakeLock.release(); wakeLock=null; }
 }
 
-function clearTimer(){
-  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
-  timerState=null;
+function beep(freq=880, dur=150, vol=0.3){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur/1000);
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime+dur/1000);
+  }catch(e){}
 }
 
-function vibrate(){
+function vibrateAndBeep(){ 
   if(navigator.vibrate) navigator.vibrate([100,50,100]);
+  beep(880, 200, 0.3);
 }
 
 function getRestSeconds(chain){
@@ -1383,29 +1371,158 @@ function getRestSeconds(chain){
   return 90;
 }
 
+function startIsoTimer(di, ci){
+  const chain = DAYS[di].exercises[ci].chain;
+  const ex = getExDef(chain);
+  const targetSecs = ex.reps || 30;
+  // prima il pre-counter 3-2-1
+  startPreCounter(targetSecs, ci);
+}
+
+function startPreCounter(targetSecs, exCardId){
+  clearTimer();
+  requestWakeLock();
+  let countdown = 3;
+  timerState = {type:'pre', total:3, remaining:countdown, exCardId, targetSecs};
+  renderTimerInCard(exCardId);
+  beep(440, 100, 0.2);
+  timerInterval = setInterval(()=>{
+    countdown--;
+    if(countdown <= 0){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      beep(660, 150, 0.3);
+      startExecTimer(targetSecs, exCardId);
+    } else {
+      timerState.remaining = countdown;
+      beep(440, 100, 0.2);
+      renderTimerInCard(exCardId);
+    }
+  }, 1000);
+}
+
+function startExecTimer(targetSecs, exCardId){
+  let elapsed = 0;
+  let beeped = false;
+  timerState = {type:'exec', total:targetSecs, elapsed:0, exCardId, targetSecs};
+  renderTimerInCard(exCardId);
+  timerInterval = setInterval(()=>{
+    elapsed++;
+    timerState.elapsed = elapsed;
+    if(elapsed === targetSecs && !beeped){
+      beeped = true;
+      vibrateAndBeep();
+      setTimeout(()=>beep(880,150,0.3), 250);
+    }
+    renderTimerInCard(exCardId);
+  }, 1000);
+}
+
+function startTimer(type, seconds, exCardId){
+  clearTimer();
+  requestWakeLock();
+  timerState = {type, total:seconds, remaining:seconds, exCardId};
+  renderTimerInCard(exCardId);
+  timerInterval = setInterval(()=>{
+    timerState.remaining--;
+    if(timerState.remaining <= 0){
+      clearInterval(timerInterval); timerInterval=null;
+      vibrateAndBeep();
+      timerState = null;
+      releaseWakeLock();
+      renderTimerInCard(exCardId);
+    } else {
+      if(timerState.remaining === 3) beep(440, 100, 0.15);
+      renderTimerInCard(exCardId);
+    }
+  }, 1000);
+}
+
+function clearTimer(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+  timerState=null;
+  releaseWakeLock();
+}
+
+function stopIsoTimer(ci){
+  if(!timerState || timerState.type !== 'exec') return;
+  const elapsed = timerState.elapsed || 0;
+  clearTimer();
+  // apri il modal con il tempo già precompilato
+  const chain = DAYS[currentDay].exercises[ci].chain;
+  const ex = getExDef(chain);
+  modalCtx = {di:currentDay, ci, si:findNextSet(currentDay, ci), chain};
+  currentRep = elapsed;
+  document.getElementById('modal-title').textContent = ex.name + ' — Serie '+(modalCtx.si+1);
+  document.getElementById('modal-sub').textContent = 'Secondi tenuti (modificabile):';
+  document.getElementById('rep-num').textContent = currentRep;
+  document.getElementById('modal').classList.add('open');
+}
+
+function findNextSet(di, ci){
+  const chain = DAYS[di].exercises[ci].chain;
+  const ex = getExDef(chain);
+  for(let s=0; s<ex.sets; s++){
+    if(!state[setKey(di,ci,s)]) return s;
+  }
+  return ex.sets-1;
+}
+
 function renderTimerInCard(exCardId){
   const el = document.getElementById('timer-'+exCardId);
   if(!el) return;
-  if(!timerState || timerState.exCardId !== exCardId){
-    el.innerHTML=''; return;
+  if(!timerState || timerState.exCardId !== exCardId){ el.innerHTML=''; return; }
+
+  const {type} = timerState;
+
+  if(type === 'pre'){
+    const {remaining} = timerState;
+    el.innerHTML=`
+      <div class="timer-bar" style="text-align:center">
+        <div class="timer-label">PREPARATI</div>
+        <div class="timer-countdown" style="font-size:42px;text-align:center;padding:8px 0">${remaining}</div>
+      </div>`;
+    return;
   }
-  const {type, total, remaining} = timerState;
+
+  if(type === 'exec'){
+    const {elapsed, targetSecs} = timerState;
+    const overTarget = elapsed >= targetSecs;
+    const display = elapsed;
+    const barPct = Math.min(Math.round((elapsed/targetSecs)*100), 100);
+    el.innerHTML=`
+      <div class="timer-bar">
+        <div class="timer-label">${overTarget ? '🔥 OLTRE IL TARGET — STAI ANDANDO!' : 'TIENI LA POSIZIONE'}</div>
+        <div class="timer-display">
+          <div class="timer-countdown ${overTarget?'urgent':''}">${display}"</div>
+          <div style="font-size:11px;color:var(--muted)">target: ${targetSecs}"</div>
+        </div>
+        <div class="timer-track">
+          <div class="timer-fill ${overTarget?'urgent':''}" style="width:${barPct}%;${overTarget?'background:var(--push)':'background:var(--core)'}"></div>
+        </div>
+        <button onclick="event.stopPropagation();stopIsoTimer(${exCardId})" style="width:100%;margin-top:8px;padding:10px;background:rgba(200,245,90,0.1);border:1px solid rgba(200,245,90,0.3);border-radius:var(--r-sm);color:var(--accent);font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer">
+          ⏹ Stop e registra ${display}"
+        </button>
+      </div>`;
+    return;
+  }
+
+  // type === 'rest'
+  const {total, remaining} = timerState;
   const pct = Math.round((remaining/total)*100);
   const mins = Math.floor(remaining/60);
   const secs = remaining%60;
   const display = mins>0 ? `${mins}:${secs.toString().padStart(2,'0')}` : `${remaining}`;
   const urgentClass = remaining<=5?'urgent':remaining<=10?'warning':'';
-  const label = type==='exec'?'TIENI LA POSIZIONE':'RIPOSO';
-  const fillColor = type==='exec'?'background:var(--core)':'';
   el.innerHTML=`
     <div class="timer-bar">
-      <div class="timer-label">${label}</div>
+      <div class="timer-label">RIPOSO</div>
       <div class="timer-display">
         <div class="timer-countdown ${urgentClass}">${display}"</div>
-        <div style="font-size:11px;color:var(--muted)">${type==='rest'?'poi riparte':'poi inserisci'}</div>
+        <div style="font-size:11px;color:var(--muted)">poi riparte</div>
       </div>
       <div class="timer-track">
-        <div class="timer-fill ${urgentClass}" style="width:${pct}%;${fillColor}"></div>
+        <div class="timer-fill ${urgentClass}" style="width:${pct}%"></div>
       </div>
     </div>`;
 }
