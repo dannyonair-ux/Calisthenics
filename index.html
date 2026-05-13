@@ -1526,6 +1526,13 @@ function renderTimerInCard(exCardId){
       </div>
     </div>`;
 }
+  function adminSet(key, value){
+  const s=JSON.parse(localStorage.getItem('caliAM_v3')||'{}');
+  s[key]=value;
+  localStorage.setItem('caliAM_v3',JSON.stringify(s));
+  renderAll();
+  alert('Fatto! '+key+' = '+value);
+}
 function renderAll(){ renderTabs(); renderDay(); renderStreak(); }
 function updateDate(){ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); }
 
