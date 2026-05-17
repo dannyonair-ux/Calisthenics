@@ -176,6 +176,28 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .hist-ex:last-child{border-bottom:none}
 .hist-sets-detail{font-size:11px;color:var(--muted);text-align:right}
 .empty-hist{text-align:center;color:var(--muted);font-size:14px;padding:48px 0;line-height:2}
+  /* CALENDARIO */
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;flex-shrink:0}
+.cal-month{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--text)}
+.cal-nav{background:none;border:1px solid var(--border);border-radius:var(--r-sm);color:var(--muted);font-size:18px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal-grid-wrap{padding:0 16px;flex-shrink:0}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.cal-dow-cell{text-align:center;font-size:10px;color:var(--muted);font-family:var(--fh);padding:4px 0}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border-radius:var(--r-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;border:1px solid transparent;transition:all 0.15s}
+.cal-day.empty{cursor:default}
+.cal-day.today{border-color:var(--accent)}
+.cal-day.selected{background:var(--surface2)}
+.cal-day-num{font-size:12px;font-family:var(--fh);font-weight:600;color:var(--muted)}
+.cal-day.today .cal-day-num{color:var(--accent)}
+.cal-day.has-data .cal-day-num{color:var(--text)}
+.cal-dot{width:6px;height:6px;border-radius:50%}
+.cal-detail-wrap{padding:12px 16px 100px;overflow-y:auto}
+.cal-detail-date{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px}
+.cal-detail-ex{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.cal-detail-name{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.cal-detail-sets{font-size:12px;color:var(--muted)}
+.cal-empty-day{text-align:center;color:var(--muted);font-size:13px;padding:24px 0}
   /* TIMER */
 .timer-bar{background:var(--surface2);border-radius:0 0 var(--r) var(--r);padding:10px 14px;border-top:1px solid var(--border)}
 .timer-display{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -212,8 +234,9 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
   </div>
 
   <div id="history-view">
-    <div class="hist-title">Storico allenamenti</div>
-    <div id="hist-content"></div>
+    <div id="cal-header"></div>
+    <div id="cal-grid"></div>
+    <div id="cal-detail"></div>
   </div>
 
   <div class="bottom-bar">
@@ -1264,56 +1287,172 @@ function renderStreak(){
 
 // ─── HISTORY ─────────────────────────────────────────────────
 function showHistory(){
+ let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calSelected = null;
+
+function showHistory(){
   document.getElementById('main-view').classList.add('hidden');
   document.getElementById('history-view').classList.add('visible');
   document.getElementById('nav-today').classList.remove('active');
   document.getElementById('nav-hist').classList.add('active');
-  renderHistory();
+  renderCalendar();
 }
 function showMain(){
   document.getElementById('main-view').classList.remove('hidden');
   document.getElementById('history-view').classList.remove('visible');
   document.getElementById('nav-today').classList.add('active');
   document.getElementById('nav-hist').classList.remove('active');
+  calSelected = null;
 }
-function renderHistory(){
-  const el=document.getElementById('hist-content');
-  const keys=Object.keys(state).filter(k=>k.startsWith('done_'));
-  if(!keys.length){el.innerHTML='<div class="empty-hist">Nessun allenamento ancora.<br>Inizia oggi! 💪</div>';return;}
-  const entries=[];
-  keys.sort().reverse().forEach(k=>{
-    const p=k.replace('done_','').split('_');
-    const ds=p[0];const di=parseInt(p[1]);
+
+function renderCalendar(){
+  renderCalHeader();
+  renderCalGrid();
+  if(calSelected) renderCalDetail(calSelected);
+  else document.getElementById('cal-detail').innerHTML='';
+}
+
+function renderCalHeader(){
+  const months=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  document.getElementById('cal-header').innerHTML=`
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calPrev()">‹</button>
+      <div class="cal-month">${months[calMonth]} ${calYear}</div>
+      <button class="cal-nav" onclick="calNext()">›</button>
+    </div>`;
+}
+
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} calSelected=null; renderCalendar(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} calSelected=null; renderCalendar(); }
+
+function getDateStr(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+function getDayData(ds){
+  // trova quali giorni di allenamento sono stati fatti in quella data
+  const trained=[];
+  DAYS.slice(0,5).forEach((_,di)=>{
+    if(state['done_'+ds+'_'+di]) trained.push(di);
+  });
+  return trained;
+}
+
+function getDayColor(di){
+  const colors={0:'var(--push)',1:'var(--legs)',2:'var(--core)',3:'var(--pull)',4:'var(--full)'};
+  return colors[di]||'var(--accent)';
+}
+
+function renderCalGrid(){
+  const today=new Date();
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  // adjust: settimana inizia da lunedì
+  const startOffset=(firstDay+6)%7;
+  const dows=['L','M','M','G','V','S','D'];
+
+  let html=`<div class="cal-grid-wrap">
+    <div class="cal-dow">${dows.map(d=>`<div class="cal-dow-cell">${d}</div>`).join('')}</div>
+    <div class="cal-days">`;
+
+  // celle vuote prima
+  for(let i=0;i<startOffset;i++) html+=`<div class="cal-day empty"></div>`;
+
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=getDateStr(calYear,calMonth,d);
+    const trained=getDayData(ds);
+    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+    const isSelected=calSelected===ds;
+    const hasData=trained.length>0;
+    const hasExtra=Object.keys(state).some(k=>k.startsWith('extras_'+ds+'_'));
+
+    // dots per tipo allenamento
+    const dots=trained.map(di=>`<div class="cal-dot" style="background:${getDayColor(di)}"></div>`).join('');
+    const extraDot=hasExtra&&trained.length===0?`<div class="cal-dot" style="background:var(--accent);opacity:0.5"></div>`:'';
+
+    html+=`<div class="cal-day ${hasData||hasExtra?'has-data':''} ${isToday?'today':''} ${isSelected?'selected':''}"
+      onclick="selectDay('${ds}')">
+      <div class="cal-day-num">${d}</div>
+      <div style="display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:100%">${dots}${extraDot}</div>
+    </div>`;
+  }
+
+  html+=`</div></div>`;
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function selectDay(ds){
+  calSelected=calSelected===ds?null:ds;
+  renderCalGrid();
+  renderCalDetail(ds);
+}
+
+function renderCalDetail(ds){
+  const el=document.getElementById('cal-detail');
+  if(!calSelected){ el.innerHTML=''; return; }
+
+  const trained=getDayData(ds);
+  const dateObj=new Date(ds+'T12:00:00');
+  const df=dateObj.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  let html=`<div class="cal-detail-wrap"><div class="cal-detail-date">📅 ${df}</div>`;
+
+  if(trained.length===0){
+    // controlla solo extra
+    const extraKey='extras_'+ds+'_';
+    const hasExtra=Object.keys(state).some(k=>k.startsWith(extraKey));
+    if(!hasExtra){
+      html+=`<div class="cal-empty-day">Nessun allenamento registrato</div>`;
+    }
+  }
+
+  trained.forEach(di=>{
     const day=DAYS[di];
     if(!day||!day.exercises) return;
-    const df=new Date(ds).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
-    let exH='';
-   day.exercises.forEach((exRef,ci)=>{
+    const typeLabel={push:'SPINTA 💪',pull:'TIRATA 🏋️',legs:'GAMBE 🦵',core:'CORE 🧘',full:'FULL BODY ⚡'}[day.type]||'';
+    html+=`<div style="font-size:10px;color:${getDayColor(di)};font-family:var(--fh);font-weight:700;letter-spacing:1px;margin:8px 0 6px">${day.name} — ${typeLabel}</div>`;
+
+    day.exercises.forEach((exRef,ci)=>{
       const ex=getExDef(exRef.chain);
       if(!ex) return;
       const savedName=state[ds+'_d'+di+'_c'+ci+'_name']||ex.name;
       const savedIso=state[ds+'_d'+di+'_c'+ci+'_iso']!==undefined?state[ds+'_d'+di+'_c'+ci+'_iso']:ex.iso;
       const sets=[];
-      for(let s=0;s<ex.sets;s++){
+      for(let s=0;s<ex.sets+3;s++){
         const v=state[ds+'_d'+di+'_c'+ci+'_s'+s];
         if(v!=null) sets.push(v);
       }
-      // cerca anche serie extra oltre ex.sets (per il bug della S4)
-      for(let s=ex.sets;s<ex.sets+3;s++){
-        const v=state[ds+'_d'+di+'_c'+ci+'_s'+s];
-        if(v!=null) sets.push(v);
-      }
-      if(sets.length) exH+=`<div class="hist-ex"><span>${savedName}</span><span class="hist-sets-detail">${sets.map((v,i)=>'S'+(i+1)+':'+v+(savedIso?'s':'×')).join(' ')}</span></div>`;
+      if(!sets.length) return;
+      html+=`<div class="cal-detail-ex">
+        <div class="cal-detail-name">${savedName}</div>
+        <div class="cal-detail-sets">${sets.map((v,i)=>'S'+(i+1)+': '+v+(savedIso?'s':'×')).join(' · ')}</div>
+      </div>`;
     });
-    // Extra esercizi
-    const extraKey='extras_'+ds+'_d'+di;
-    const extras=state[extraKey]||[];
+
+    // extra di quel giorno
+    const extras=state['extras_'+ds+'_d'+di]||[];
     extras.forEach(ex=>{
-      exH+=`<div class="hist-ex" style="border-color:rgba(200,245,90,0.15)"><span style="color:var(--accent)">⭐ ${ex.name}</span><span class="hist-sets-detail">${ex.sets.map((v,s)=>'S'+(s+1)+':'+v+(ex.iso?'s':'×')).join(' ')}</span></div>`;
+      html+=`<div class="cal-detail-ex" style="border-color:rgba(200,245,90,0.2)">
+        <div class="cal-detail-name" style="color:var(--accent)">⭐ ${ex.name}</div>
+        <div class="cal-detail-sets">${ex.sets.map((v,s)=>'S'+(s+1)+': '+v+(ex.iso?'s':'×')).join(' · ')}</div>
+      </div>`;
     });
-    if(exH) entries.push(`<div class="hist-entry"><div class="hist-day">${day.name} — ${day.title||''}</div><div class="hist-date">${df}</div>${exH}</div>`);
   });
-  el.innerHTML=entries.join('')||'<div class="empty-hist">Nessun dato registrato.</div>';
+
+  // extra senza allenamento ufficiale (es. giorno di riposo con extra)
+  if(trained.length===0){
+    DAYS.slice(0,5).forEach((_,di)=>{
+      const extras=state['extras_'+ds+'_d'+di]||[];
+      extras.forEach(ex=>{
+        html+=`<div class="cal-detail-ex" style="border-color:rgba(200,245,90,0.2)">
+          <div class="cal-detail-name" style="color:var(--accent)">⭐ ${ex.name}</div>
+          <div class="cal-detail-sets">${ex.sets.map((v,s)=>'S'+(s+1)+': '+v+(ex.iso?'s':'×')).join(' · ')}</div>
+        </div>`;
+      });
+    });
+  }
+
+  html+=`</div>`;
+  el.innerHTML=html;
 }
 
 // ─── INIT ────────────────────────────────────────────────────
