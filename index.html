@@ -176,6 +176,34 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .hist-ex:last-child{border-bottom:none}
 .hist-sets-detail{font-size:11px;color:var(--muted);text-align:right}
 .empty-hist{text-align:center;color:var(--muted);font-size:14px;padding:48px 0;line-height:2}
+  /* EVOLUZIONE */
+#evolution-view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 100px;display:none}
+#evolution-view.visible{display:block}
+.evo-wrap{padding:20px 20px 0}
+.evo-title{font-family:var(--fh);font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.evo-sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.evo-progress-bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.evo-progress-fill{height:100%;border-radius:3px;transition:width 0.8s ease;background:linear-gradient(90deg,var(--push),var(--legs),var(--accent))}
+.evo-pct{font-family:var(--fh);font-size:13px;color:var(--accent);margin-bottom:24px}
+.evo-stages{display:flex;flex-direction:column;gap:12px;padding:0 20px 20px}
+.evo-stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;transition:all 0.3s}
+.evo-stage.unlocked{border-color:rgba(200,245,90,0.3);background:rgba(200,245,90,0.04)}
+.evo-stage.current{border-color:var(--accent);background:rgba(200,245,90,0.08);box-shadow:0 0 12px rgba(200,245,90,0.1)}
+.evo-stage.locked{opacity:0.4}
+.evo-figure{font-size:36px;flex-shrink:0;filter:grayscale(1);transition:filter 0.3s}
+.evo-stage.unlocked .evo-figure{filter:grayscale(0)}
+.evo-stage.current .evo-figure{filter:grayscale(0)}
+.evo-info{flex:1}
+.evo-stage-name{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--muted);margin-bottom:3px}
+.evo-stage.unlocked .evo-stage-name{color:var(--text)}
+.evo-stage.current .evo-stage-name{color:var(--accent)}
+.evo-stage-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.evo-stage-req{font-size:10px;color:var(--muted);margin-top:4px;font-family:var(--fh)}
+.evo-stage.current .evo-stage-req{color:var(--accent)}
+.evo-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-family:var(--fh);font-weight:700;flex-shrink:0}
+.evo-badge.done{background:rgba(200,245,90,0.15);color:var(--accent)}
+.evo-badge.now{background:var(--accent);color:var(--bg)}
+.evo-badge.locked{background:var(--surface2);color:var(--muted)}
   /* CALENDARIO */
 .cal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;flex-shrink:0}
 .cal-month{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--text)}
@@ -233,6 +261,9 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
     <div class="scroll-area" id="scroll-area"></div>
   </div>
 
+   <div id="evolution-view">
+    <div id="evo-content"></div>
+  </div>
   <div id="history-view">
     <div id="cal-header"></div>
     <div id="cal-grid"></div>
@@ -242,8 +273,8 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
   <div class="bottom-bar">
     <button class="nav-btn active" id="nav-today" onclick="showMain()"><span class="nav-icon">⚡</span><span>Oggi</span></button>
     <button class="nav-btn" id="nav-hist" onclick="showHistory()"><span class="nav-icon">📋</span><span>Storico</span></button>
+    <button class="nav-btn" id="nav-evo" onclick="showEvolution()"><span class="nav-icon">🧬</span><span>Evoluzione</span></button>
   </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1293,15 +1324,19 @@ let calSelected = null;
 function showHistory(){
   document.getElementById('main-view').classList.add('hidden');
   document.getElementById('history-view').classList.add('visible');
+  document.getElementById('evolution-view').classList.remove('visible');
   document.getElementById('nav-today').classList.remove('active');
   document.getElementById('nav-hist').classList.add('active');
+  document.getElementById('nav-evo').classList.remove('active');
   renderCalendar();
 }
 function showMain(){
   document.getElementById('main-view').classList.remove('hidden');
   document.getElementById('history-view').classList.remove('visible');
+  document.getElementById('evolution-view').classList.remove('visible');
   document.getElementById('nav-today').classList.add('active');
   document.getElementById('nav-hist').classList.remove('active');
+  document.getElementById('nav-evo').classList.remove('active');
   calSelected = null;
 }
 
@@ -1791,6 +1826,160 @@ function renderTimerInCard(exCardId){
   localStorage.setItem('caliAM_v3',JSON.stringify(s));
   renderAll();
   alert('Fatto! '+key+' = '+value);
+}
+  // ─── EVOLUZIONE ──────────────────────────────────────────────
+const EVO_STAGES = [
+  {
+    id:0, emoji:'🛋️', name:'Il Divano',
+    desc:'Punto di partenza. Il corpo si ricorda cosa significa muoversi.',
+    req:'Inizia il programma',
+    weeksMin:0, levelsMin:0
+  },
+  {
+    id:1, emoji:'🚶', name:'Il Risveglio',
+    desc:'Le articolazioni si svegliano. Il respiro migliora. Qualcosa sta cambiando.',
+    req:'2 settimane + primi livelli completati',
+    weeksMin:2, levelsMin:3
+  },
+  {
+    id:2, emoji:'🏃', name:'Il Principiante',
+    desc:'Il corpo inizia ad adattarsi. Le prime flessioni normali compaiono.',
+    req:'4 settimane + livello 2 sbloccato',
+    weeksMin:4, levelsMin:8
+  },
+  {
+    id:3, emoji:'💪', name:'Il Costruttore',
+    desc:'I muscoli rispondono. Si vede la differenza nello specchio.',
+    req:'7 settimane + livello 3 sbloccato su più catene',
+    weeksMin:7, levelsMin:16
+  },
+  {
+    id:4, emoji:'🧗', name:"L'Atleta in Formazione",
+    desc:'Le skill base sono solide. Push-up, dip e plank sono diventati abitudine.',
+    req:'10 settimane + buona padronanza degli esercizi',
+    weeksMin:10, levelsMin:25
+  },
+  {
+    id:5, emoji:'🤸', name:'Il Calisteta',
+    desc:'Il corpo si muove bene. Le varianti avanzate iniziano ad essere accessibili.',
+    req:'14 settimane + livelli avanzati',
+    weeksMin:14, levelsMin:35
+  },
+  {
+    id:6, emoji:'🏋️', name:"L'Atleta",
+    desc:'Forza, mobilità e resistenza si equilibrano. Il corpo è uno strumento.',
+    req:'20 settimane + skill intermedie',
+    weeksMin:20, levelsMin:50
+  },
+  {
+    id:7, emoji:'⚡', name:'Il Guerriero',
+    desc:'Archer push-up, pistol squat, L-sit. Roba che prima sembrava impossibile.',
+    req:'28 settimane + skill avanzate',
+    weeksMin:28, levelsMin:65
+  },
+  {
+    id:8, emoji:'🦅', name:'Il Maestro',
+    desc:'Il calisthenics è uno stile di vita. Il corpo fa cose che la maggior parte delle persone non immagina.',
+    req:'40 settimane + padronanza completa',
+    weeksMin:40, levelsMin:80
+  },
+  {
+    id:9, emoji:'🤙', name:'Zero2Hero',
+    desc:'Dal divano al controllo totale del corpo. Questo eri tu. Guarda da dove sei partito.',
+    req:'52 settimane + tutti i livelli max',
+    weeksMin:52, levelsMin:100
+  }
+];
+
+function getTotalLevelsUnlocked(){
+  let total = 0;
+  Object.keys(CHAINS).forEach(chain=>{
+    total += getLevel(chain);
+  });
+  return total;
+}
+
+function getWeeksActive(){
+  // conta le settimane distinte in cui ci sono allenamenti
+  const weeks = new Set();
+  Object.keys(state).forEach(k=>{
+    if(k.startsWith('done_')){
+      const ds = k.replace('done_','').split('_')[0];
+      if(ds){
+        // calcola il numero di settimana ISO
+        const d = new Date(ds);
+        const startOfYear = new Date(d.getFullYear(),0,1);
+        const week = Math.ceil(((d-startOfYear)/86400000 + startOfYear.getDay()+1)/7);
+        weeks.add(d.getFullYear()+'_'+week);
+      }
+    }
+  });
+  return weeks.size;
+}
+
+function getCurrentStageIdx(weeks, levels){
+  let current = 0;
+  for(let i=0; i<EVO_STAGES.length; i++){
+    if(weeks >= EVO_STAGES[i].weeksMin && levels >= EVO_STAGES[i].levelsMin){
+      current = i;
+    }
+  }
+  return current;
+}
+
+function getEvoPercent(weeks, levels){
+  const maxWeeks = EVO_STAGES[EVO_STAGES.length-1].weeksMin;
+  const maxLevels = EVO_STAGES[EVO_STAGES.length-1].levelsMin;
+  const wPct = Math.min(weeks/maxWeeks, 1);
+  const lPct = Math.min(levels/maxLevels, 1);
+  return Math.round((wPct*0.4 + lPct*0.6)*100);
+}
+
+function showEvolution(){
+  document.getElementById('main-view').classList.add('hidden');
+  document.getElementById('history-view').classList.remove('visible');
+  document.getElementById('evolution-view').classList.add('visible');
+  document.getElementById('nav-today').classList.remove('active');
+  document.getElementById('nav-hist').classList.remove('active');
+  document.getElementById('nav-evo').classList.add('active');
+  renderEvolution();
+}
+
+function renderEvolution(){
+  const weeks = getWeeksActive();
+  const levels = getTotalLevelsUnlocked();
+  const currentIdx = getCurrentStageIdx(weeks, levels);
+  const pct = getEvoPercent(weeks, levels);
+  const current = EVO_STAGES[currentIdx];
+
+  let html = `<div class="evo-wrap">
+    <div class="evo-title">La tua evoluzione</div>
+    <div class="evo-sub">Settimane attive: <strong style="color:var(--accent)">${weeks}</strong> · Livelli sbloccati: <strong style="color:var(--accent)">${levels}</strong></div>
+    <div class="evo-progress-bar"><div class="evo-progress-fill" style="width:${pct}%"></div></div>
+    <div class="evo-pct">${pct}% del percorso completo · Fase attuale: ${current.name}</div>
+  </div>
+  <div class="evo-stages">`;
+
+  EVO_STAGES.forEach((stage, i)=>{
+    const isUnlocked = weeks >= stage.weeksMin && levels >= stage.levelsMin;
+    const isCurrent = i === currentIdx;
+    const isLocked = !isUnlocked;
+    const stateClass = isCurrent ? 'current' : isUnlocked ? 'unlocked' : 'locked';
+    const badge = isCurrent ? '<span class="evo-badge now">ORA</span>' : isUnlocked ? '<span class="evo-badge done">✓</span>' : '<span class="evo-badge locked">🔒</span>';
+
+    html += `<div class="evo-stage ${stateClass}">
+      <div class="evo-figure">${stage.emoji}</div>
+      <div class="evo-info">
+        <div class="evo-stage-name">${stage.name}</div>
+        <div class="evo-stage-desc">${stage.desc}</div>
+        <div class="evo-stage-req">📍 ${stage.req}</div>
+      </div>
+      ${badge}
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('evo-content').innerHTML = html;
 }
 function renderAll(){ renderTabs(); renderDay(); renderStreak(); }
 function updateDate(){ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); }
