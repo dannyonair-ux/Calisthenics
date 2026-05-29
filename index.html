@@ -226,6 +226,26 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .cal-detail-name{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
 .cal-detail-sets{font-size:12px;color:var(--muted)}
 .cal-empty-day{text-align:center;color:var(--muted);font-size:13px;padding:24px 0}
+  /* ESERCIZI SUGGERITI */
+.suggested-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.suggested-ex{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all 0.2s}
+.suggested-ex.selected{border-color:var(--accent);background:rgba(200,245,90,0.06)}
+.suggested-ex-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.suggested-ex-name{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text)}
+.suggested-ex.selected .suggested-ex-name{color:var(--accent)}
+.suggested-ex-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.suggested-ex-tag{font-size:9px;padding:2px 8px;border-radius:10px;font-family:var(--fh);font-weight:700;flex-shrink:0}
+.tag-push{background:rgba(245,90,140,0.15);color:var(--push)}
+.tag-pull{background:rgba(90,245,200,0.15);color:var(--pull)}
+.tag-core{background:rgba(90,140,245,0.15);color:var(--core)}
+.tag-mob{background:rgba(245,200,90,0.15);color:var(--legs)}
+.suggested-ex-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.suggested-ex.selected .suggested-ex-detail{display:block}
+.suggested-ex-steps{list-style:none;margin:6px 0 10px}
+.suggested-ex-steps li{font-size:12px;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:8px}
+.suggested-ex-steps li:last-child{border-bottom:none}
+.suggested-add-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:var(--r-sm);color:var(--bg);font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px}
+.suggest-toggle-btn{width:100%;padding:13px;background:none;border:1px solid rgba(90,140,245,0.3);border-radius:var(--r);color:var(--core);font-family:var(--fm);font-size:13px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
   /* TIMER */
 .timer-bar{background:var(--surface2);border-radius:0 0 var(--r) var(--r);padding:10px 14px;border-top:1px solid var(--border)}
 .timer-display{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -922,7 +942,160 @@ const CHAINS = {
       ytq:"AMRAP avanzato 8 minuti circuito" }
   ]
 };
+// ─── ESERCIZI SUGGERITI PER GIORNO ───────────────────────────
+const SUGGESTED = {
+  0: [ // LUNEDÌ — Push: complementari core e mobilità, no pull (domani gambe)
+    { name:"Push-up isometric hold", tag:"push", sets:"3 × 10 sec", setsN:3, repsN:10, iso:true,
+      tip:"Scendi a metà flessione e tieni 10 secondi. Costruisce forza nel punto debole.",
+      steps:["Posizione flessione normale","Scendi fino a gomiti a 90°","Tieni fermo 10 secondi","Risali e ripeti"] },
+    { name:"Plank tabata (20\"/10\")", tag:"core", sets:"8 round × 20 sec", setsN:8, repsN:20, iso:true,
+      tip:"20 sec di plank, 10 sec di riposo, 8 volte. 4 minuti totali di fuoco.",
+      steps:["Posizione plank teso","20 secondi al massimo","10 secondi di riposo","Ripeti 8 volte senza fermarti"] },
+    { name:"Superman lento (3×10)", tag:"core", sets:"3 × 10 rip", setsN:3, repsN:10, iso:false,
+      tip:"Complementare perfetto alla spinta — rinforza la catena posteriore.",
+      steps:["Pancia a terra, braccia avanti","Solleva tutto lentamente","Tieni 3 secondi in alto","Abbassa controllato"] },
+    { name:"Stretching spalle e petto", tag:"mob", sets:"3 × 30 sec", setsN:3, repsN:30, iso:true,
+      tip:"Mobilità spalle dopo la sessione push — previene rigidità e migliora range.",
+      steps:["Braccio teso contro il muro","Ruota lentamente il corpo in fuori","Senti lo stretch sul petto","Cambia lato"] },
+    { name:"Hollow body (ginocchia)", tag:"core", sets:"3 × 20 sec", setsN:3, repsN:20, iso:true,
+      tip:"Core completo che non sovraccaria spalle e petto già allenati.",
+      steps:["Sdraiato, braccia lungo i fianchi","Solleva spalle e gambe piegate","Schiena bassa a terra","Respira regolarmente"] }
+  ],
+  1: [ // MARTEDÌ — Gambe: complementari core e mobilità, no push/pull
+    { name:"Glute bridge isometric hold", tag:"core", sets:"3 × 20 sec", setsN:3, repsN:20, iso:true,
+      tip:"Tieni il bacino in alto contraendo i glutei al massimo. Attivazione profonda.",
+      steps:["Posizione glute bridge","Spingi in alto","Tieni 20 secondi contraendo forte","Scendi lento"] },
+    { name:"Reverse crunch (3×15)", tag:"core", sets:"3 × 15 rip", setsN:3, repsN:15, iso:false,
+      tip:"Core basso che non coinvolge le gambe già stanche.",
+      steps:["Sdraiato, gambe a 90°","Porta le ginocchia al petto con il core","Arriccia il bacino","Scendi lento"] },
+    { name:"Stretching gambe completo", tag:"mob", sets:"4 × 30 sec", setsN:4, repsN:30, iso:true,
+      tip:"Dopo una sessione gambe intensa è fondamentale. Riduce DOMS del giorno dopo.",
+      steps:["Quadricipiti: tallone al gluteo 30 sec","Femorali: gamba tesa a terra 30 sec","Hip flexor: affondo basso 30 sec","Polpacci al muro 30 sec"] },
+    { name:"Plank laterale (2×20 sec/lato)", tag:"core", sets:"2 × 20 sec/lato", setsN:2, repsN:20, iso:true,
+      tip:"Obliqui e core laterale — non coinvolge gambe o schiena.",
+      steps:["Avambraccio a terra lateralmente","Fianchi alti in linea","20 secondi per lato","Respira regolarmente"] },
+    { name:"Mountain climbers lenti (3×20)", tag:"core", sets:"3 × 20 rip", setsN:3, repsN:20, iso:false,
+      tip:"Cardio leggero e core senza caricare ulteriormente le gambe.",
+      steps:["Posizione plank braccia tese","Porta le ginocchia al petto alternando","Ritmo lento e controllato","Core sempre contratto"] }
+  ],
+  2: [ // MERCOLEDÌ — Core: complementari mobilità e leggera spinta, no gambe (domani schiena)
+    { name:"Push-up al muro (3×15)", tag:"push", sets:"3 × 15 rip", setsN:3, repsN:15, iso:false,
+      tip:"Spinta leggera che non stanca le spalle per la sessione di schiena di domani.",
+      steps:["In piedi di fronte al muro","Mani al muro a larghezza spalle","Scendi e spingi come una flessione","Mantieni il corpo rigido"] },
+    { name:"Stretching colonna completo", tag:"mob", sets:"5 × 30 sec", setsN:5, repsN:30, iso:true,
+      tip:"Dopo il core day la colonna ha bisogno di mobilità attiva.",
+      steps:["Cat-cow 10 rip","Cobra stretch 30 sec","Posa del bambino 30 sec","Torsione supina 30 sec per lato"] },
+    { name:"Dead bug (3×8 per lato)", tag:"core", sets:"3 × 8 rip/lato", setsN:3, repsN:8, iso:false,
+      tip:"Esercizio avanzato di stabilità del core — braccia e gambe opposte si allungano.",
+      steps:["Sdraiato, braccia verso il soffitto, gambe a 90°","Abbassa braccio dx e gamba sx contemporaneamente","Schiena bassa incollata al suolo","Torna su e alterna"] },
+    { name:"Plank 3D (3×30 sec)", tag:"core", sets:"3 × 30 sec", setsN:3, repsN:30, iso:true,
+      tip:"Plank normale ma fai piccoli cerchi con i gomiti. Attiva più fibre stabilizzatrici.",
+      steps:["Posizione plank su avambracci","Fai piccoli cerchi in senso orario con i gomiti","Poi in senso antiorario","Corpo rigido per tutta la durata"] },
+    { name:"Hollow body rocks (3×10)", tag:"core", sets:"3 × 10 rip", setsN:3, repsN:10, iso:false,
+      tip:"Se riesci già a tenere la hollow body, prova a dondolare. Test definitivo del core.",
+      steps:["Posizione hollow body completa","Dondola in avanti e indietro","Mantieni la forma senza cedere","Fermati se perdi la tensione"] }
+  ],
+  3: [ // GIOVEDÌ — Schiena: complementari core e mobilità, no push (domani full body)
+    { name:"Inverted row isometric hold", tag:"pull", sets:"3 × 10 sec", setsN:3, repsN:10, iso:true,
+      tip:"Tieni la posizione più alta che riesci. Costruisce forza nel punto debole della tirata.",
+      steps:["Posizione inverted row al tavolo","Tira fino al punto più alto possibile","Tieni 10 secondi stringendo le scapole","Scendi lento"] },
+    { name:"Scapole a terra (3×15)", tag:"pull", sets:"3 × 15 rip", setsN:3, repsN:15, iso:false,
+      tip:"Sdraiato, spingi le scapole verso il suolo. Attivazione isolata dei romboidi.",
+      steps:["Sdraiato a terra, braccia lungo i fianchi","Spingi le scapole verso il suolo","Tieni 2 secondi","Rilascia e ripeti"] },
+    { name:"Stretching schiena e dorsali", tag:"mob", sets:"4 × 30 sec", setsN:4, repsN:30, iso:true,
+      tip:"Dopo la sessione di schiena — mantiene la mobilità e riduce la rigidità.",
+      steps:["Posa del bambino 30 sec","Torsione seduta 30 sec per lato","Braccia incrociate al petto 30 sec","Cobra stretch 30 sec"] },
+    { name:"Face pull con asciugamano (3×12)", tag:"pull", sets:"3 × 12 rip", setsN:3, repsN:12, iso:false,
+      tip:"Tira l'asciugamano verso il viso tenendo i gomiti alti. Rotatori della spalla.",
+      steps:["Tieni un asciugamano teso con entrambe le mani","Portalo verso il viso tenendo i gomiti alti","Senti le scapole stringersi","Torna lento"] },
+    { name:"Plank su pugno (3×30 sec)", tag:"core", sets:"3 × 30 sec", setsN:3, repsN:30, iso:true,
+      tip:"Pugni a terra invece delle mani aperte — posizione più neutra per i polsi.",
+      steps:["Pugni a terra, braccia tese","Corpo rigido","Core e glutei contratti","Respira regolarmente"] }
+  ],
+  4: [ // VENERDÌ — Full body: complementari mobilità e core leggero, domani riposo
+    { name:"Push-up normali extra (3×5)", tag:"push", sets:"3 × 5 rip", setsN:3, repsN:5, iso:false,
+      tip:"Dopo il full body, 3 serie pulite di push-up normali. Qualità assoluta.",
+      steps:["Posizione plank rigida","Gomiti a 45°","Petto tocca il suolo","Spingi su esplosivo"] },
+    { name:"L-sit isometrico (3×5 sec)", tag:"core", sets:"3 × 5 sec", setsN:3, repsN:5, iso:true,
+      tip:"Seduto a terra, mani ai lati, spingi il suolo e prova a sollevarti. Core estremo.",
+      steps:["Seduto a terra, mani ai lati delle anche","Gambe tese davanti","Spingi forte le mani verso il suolo","Prova a sollevare il sedere anche di 1 cm"] },
+    { name:"Stretching full body (5 min)", tag:"mob", sets:"5 minuti", setsN:1, repsN:300, iso:true,
+      tip:"Giorno full body = stretching completo dopo. Il corpo lo merita.",
+      steps:["Quadricipiti 30 sec per gamba","Femorali 30 sec per gamba","Petto e spalle 30 sec","Schiena: posa del bambino 60 sec"] },
+    { name:"Tabata squat (8×20 sec)", tag:"core", sets:"8 round × 20 sec", setsN:8, repsN:20, iso:false,
+      tip:"20 sec di squat a ritmo medio, 10 sec riposo × 8. Cardio finale devastante.",
+      steps:["Squat normale a ritmo costante","20 secondi senza fermarsi","10 secondi di riposo","Ripeti 8 volte"] },
+    { name:"Hollow body + push-up combo (3×5+10 sec)", tag:"core", sets:"3 round", setsN:3, repsN:5, iso:false,
+      tip:"5 push-up normali poi immediatamente 10 sec di hollow body. Combo brutale.",
+      steps:["5 push-up normali","Immediatamente sdraiati in hollow body","10 secondi di tenuta","Ripeti 3 volte"] }
+  ]
+};
 
+let suggestOpen = false;
+let suggestSelected = null;
+
+function toggleSuggestPanel(di){
+  suggestOpen = !suggestOpen;
+  suggestSelected = null;
+  renderSuggestPanel(di);
+}
+
+function selectSuggest(di, idx){
+  suggestSelected = suggestSelected === idx ? null : idx;
+  renderSuggestPanel(di);
+}
+
+function addSuggestedExtra(di){
+  if(suggestSelected === null) return;
+  const dayType = DAYS[di].type;
+  const list = SUGGESTED[di] || [];
+  const ex = list[suggestSelected];
+  if(!ex) return;
+  const key='extras_'+todayStr()+'_d'+di;
+  if(!state[key]) state[key]=[];
+  // crea le serie vuote da registrare
+  const sets = Array(ex.setsN).fill(null);
+  state[key].push({
+    name: ex.name,
+    sets: sets.map(()=>ex.repsN),
+    iso: ex.iso,
+    suggested: true
+  });
+  saveState();
+  suggestOpen = false;
+  suggestSelected = null;
+  renderAll();
+}
+
+function renderSuggestPanel(di){
+  const el = document.getElementById('suggest-panel-'+di);
+  if(!el) return;
+  if(!suggestOpen){ el.innerHTML=''; return; }
+
+  const list = SUGGESTED[di] || [];
+  const tagLabels = {push:'SPINTA',pull:'TIRATA',core:'CORE',mob:'MOBILITÀ'};
+
+  let html = `<div class="suggested-list">`;
+  list.forEach((ex, idx)=>{
+    const isSelected = suggestSelected === idx;
+    html += `<div class="suggested-ex ${isSelected?'selected':''}" onclick="selectSuggest(${di},${idx})">
+      <div class="suggested-ex-header">
+        <div>
+          <div class="suggested-ex-name">${ex.name}</div>
+          <div class="suggested-ex-meta">${ex.sets}</div>
+        </div>
+        <span class="suggested-ex-tag tag-${ex.tag}">${tagLabels[ex.tag]||ex.tag}</span>
+      </div>
+      <div class="suggested-ex-detail">
+        <div style="font-size:12px;color:var(--accent2);padding:8px 10px;background:rgba(90,245,200,0.06);border-radius:var(--r-sm);margin-bottom:8px">${ex.tip}</div>
+        <ul class="suggested-ex-steps">${ex.steps.map((s,i)=>`<li><span class="step-n">${i+1}</span><span>${s}</span></li>`).join('')}</ul>
+        <button class="suggested-add-btn" onclick="event.stopPropagation();addSuggestedExtra(${di})">＋ Aggiungi al piano di oggi</button>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+}
 // ─── GIORNI ──────────────────────────────────────────────────
 const DAYS = [
   { label:"LUN", name:"Giorno 1", title:"Petto · Spalle · Tricipiti", type:"push", color:"var(--push)",
@@ -1234,8 +1407,12 @@ function renderDay(){
   </div>
   <div style="margin-top:10px">
     ${renderExtras(currentDay)}
-    <button onclick="openExtraModal(${currentDay})" style="width:100%;padding:13px;background:none;border:1px dashed var(--border);border-radius:var(--r);color:var(--muted);font-family:var(--fm);font-size:13px;cursor:pointer;margin-top:8px">＋ Aggiungi esercizio extra</button>
-  </div>`;
+    <button class="suggest-toggle-btn" onclick="toggleSuggestPanel(${currentDay})">
+      💡 Scegli esercizio suggerito
+    </button>
+    <div id="suggest-panel-${currentDay}"></div>
+    <button onclick="openExtraModal(${currentDay})" style="width:100%;padding:13px;background:none;border:1px dashed var(--border);border-radius:var(--r);color:var(--muted);font-family:var(--fm);font-size:13px;cursor:pointer;margin-top:8px">＋ Aggiungi esercizio libero</button>
+  </div>
 
   area.innerHTML=html;
   if(pct===100){
