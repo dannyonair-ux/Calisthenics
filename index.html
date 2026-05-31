@@ -1411,8 +1411,9 @@ function renderDay(){
       💡 Scegli esercizio suggerito
     </button>
     <div id="suggest-panel-${currentDay}"></div>
-    <button onclick="openExtraModal(${currentDay})" style="width:100%;padding:13px;background:none;border:1px dashed var(--border);border-radius:var(--r);color:var(--muted);font-family:var(--fm);font-size:13px;cursor:pointer;margin-top:8px">＋ Aggiungi esercizio libero</button>
+   <button onclick="openExtraModal(${currentDay})" style="width:100%;padding:13px;background:none;border:1px dashed var(--border);border-radius:var(--r);color:var(--muted);font-family:var(--fm);font-size:13px;cursor:pointer;margin-top:8px">＋ Aggiungi esercizio libero</button>
   </div>
+  `;
 
   area.innerHTML=html;
   if(pct===100){
