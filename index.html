@@ -262,6 +262,14 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 </head>
 <body>
 
+  <div id="login-screen" style="position:fixed;inset:0;background:#0f1117;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:2000">
+  <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:#c8f55a;letter-spacing:-2px">Zero2Hero</div>
+  <div style="font-size:12px;color:#8890a8;letter-spacing:3px">PROGRESSIONE CONTINUA</div>
+  <button onclick="loginGoogle()" style="margin-top:16px;padding:14px 28px;background:#c8f55a;border:none;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#0f1117;cursor:pointer;display:flex;align-items:center;gap:10px">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    Accedi con Google
+  </button>
+</div>
 <div id="splash">
   <div class="logo">Zero2Hero</div>
   <div class="sub">PROGRESSIONE CONTINUA</div>
@@ -313,7 +321,80 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCQHp99R5BPMrpCud7iHvORt-ChAeF25o4",
+  authDomain: "zero2hero-7cbcf.firebaseapp.com",
+  projectId: "zero2hero-7cbcf",
+  storageBucket: "zero2hero-7cbcf.firebasestorage.app",
+  messagingSenderId: "750195595197",
+  appId: "1:750195595197:web:e8d7733f3f386ffea0e4d4"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+async function saveStateToFirestore() {
+  if (!currentUser) return;
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid), { data: state });
+  } catch(e) { console.error('Errore salvataggio:', e); }
+}
+
+async function loadStateFromFirestore() {
+  if (!currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, 'users', currentUser.uid));
+    if (snap.exists()) {
+      state = snap.data().data || {};
+    } else {
+      const local = localStorage.getItem('caliAM_v3');
+      if (local) {
+        state = JSON.parse(local);
+        await saveStateToFirestore();
+      }
+    }
+  } catch(e) { console.error('Errore caricamento:', e); }
+}
+
+async function loginGoogle() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) { console.error('Errore login:', e); }
+}
+
+async function logoutGoogle() {
+  await signOut(auth);
+  state = {};
+  renderAll();
+}
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    await loadStateFromFirestore();
+    applyPendingLevels();
+    currentDay = getTodayIdx();
+    updateDate();
+    renderAll();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+window.loginGoogle = loginGoogle;
+window.logoutGoogle = logoutGoogle;
 // ─────────────────────────────────────────────────────────────
 // PROGRESSION CHAINS
 // Partenza calibrata su 2 settimane pregresse + prestazione di oggi
@@ -1201,7 +1282,10 @@ let modalCtx = null;
 let currentRep = 10;
 
 function loadState(){ try{ state=JSON.parse(localStorage.getItem('caliAM_v3')||'{}'); }catch(e){ state={}; } }
-function saveState(){ localStorage.setItem('caliAM_v3',JSON.stringify(state)); }
+function saveState(){
+  localStorage.setItem('caliAM_v3',JSON.stringify(state));
+  saveStateToFirestore();
+}
 
 function getLevel(chain){ return state['lv_'+chain]||0; }
 function setLevel(chain,lv){ state['lv_'+chain]=lv; saveState(); }
@@ -2162,11 +2246,8 @@ function renderEvolution(){
 function renderAll(){ renderTabs(); renderDay(); renderStreak(); }
 function updateDate(){ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); }
 
-loadState();
-applyPendingLevels();
-currentDay=getTodayIdx();
 updateDate();
-setTimeout(()=>{ document.getElementById('splash').classList.add('hide'); renderAll(); },1200);
+setTimeout(()=>{ document.getElementById('splash').classList.add('hide'); },1200);
 </script>
 </body>
 </html>
