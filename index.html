@@ -48,7 +48,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .day-tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:700}
 .day-tab.done-tab{border-color:rgba(200,245,90,0.3);color:rgba(200,245,90,0.5)}
 
-/* MAIN CONTENT AREA */
+/* MAIN CONTENT AREA — THIS IS THE SCROLLABLE PART */
 #main-view{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 100px}
 
@@ -71,7 +71,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .day-progress{margin-top:10px;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden}
 .day-progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.4s}
 
-/* PHASE CARDS */
+/* PHASE CARDS (warmup/cooldown/rest) */
 .phase-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
 .phase-label{font-size:9px;color:var(--muted);letter-spacing:2px;font-family:var(--fh);font-weight:600;margin-bottom:6px}
 .phase-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
@@ -157,5 +157,6 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
     </div>
   </div>
 
+  <!-- Sotto questa riga caricherai poi il tuo file javascript logico dell'applicazione (es. app.js) se lo avevi separato -->
 </body>
 </html>
