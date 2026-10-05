@@ -272,12 +272,15 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
     Accedi con Google
   </button>
 </div>
+<div id="auth-overlay" style="position:fixed;inset:0;background:#0f1117;z-index:1500;display:flex;align-items:center;justify-content:center">
+  <div style="font-family:'Syne',sans-serif;font-size:18px;color:#c8f55a">Caricamento...</div>
+</div>
 <div id="splash">
   <div class="logo">Zero2Hero</div>
   <div class="sub">PROGRESSIONE CONTINUA</div>
 </div>
 
-<div id="app" style="display:none">
+<div id="app">
   <div class="topbar">
     <div>
       <div class="topbar-logo">Zero2Hero</div>
@@ -370,6 +373,7 @@ async function logoutGoogle(){ await auth.signOut(); state={}; renderAll(); }
 
 auth.onAuthStateChanged(async(user)=>{
   currentUser=user;
+  document.getElementById('auth-overlay').style.display='none';
   if(user){
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='flex';
