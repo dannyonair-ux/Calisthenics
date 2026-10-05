@@ -283,10 +283,8 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
       <div class="topbar-logo">Zero2Hero</div>
       <div class="topbar-date" id="topbar-date"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-  <div class="topbar-streak"><div class="streak-dot"></div><span id="streak-count">0 sessioni</span></div>
-  <button onclick="logoutGoogle()" title="Logout" style="background:none;border:none;color:#8890a8;font-size:16px;cursor:pointer;padding:4px;">⏻</button>
-</div>
+    <div class="topbar-streak"><div class="streak-dot"></div><span id="streak-count">0 giorni</span></div>
+  </div>
 
   <div id="main-view">
     <div class="day-tabs" id="day-tabs"></div>
@@ -1074,7 +1072,7 @@ function confirmRep(){
 }
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500); }
-function renderStreak(){ let total=0; Object.keys(state).forEach(k=>{ if(k.startsWith('done_'))total++; }); document.getElementById('streak-count').textContent=total+(total===1?' sessione':' sessioni'); }
+function renderStreak(){ let streak=0; const today=new Date(); for(let i=0;i<60;i++){ const d=new Date(today);d.setDate(today.getDate()-i); const ds=d.toISOString().slice(0,10); if(DAYS.slice(0,5).some((_,di)=>state['done_'+ds+'_'+di]))streak++; else if(i>0)break; } document.getElementById('streak-count').textContent=streak+(streak===1?' giorno':' giorni'); }
 
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth(), calSelected=null;
 function showHistory(){ document.getElementById('main-view').classList.add('hidden'); document.getElementById('history-view').classList.add('visible'); document.getElementById('evolution-view').classList.remove('visible'); document.getElementById('nav-today').classList.remove('active'); document.getElementById('nav-hist').classList.add('active'); document.getElementById('nav-evo').classList.remove('active'); renderCalendar(); }
