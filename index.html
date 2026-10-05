@@ -246,10 +246,9 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .suggested-ex-steps li:last-child{border-bottom:none}
 .suggested-add-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:var(--r-sm);color:var(--bg);font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;margin-top:6px}
 .suggest-toggle-btn{width:100%;padding:13px;background:none;border:1px solid rgba(90,140,245,0.3);border-radius:var(--r);color:var(--core);font-family:var(--fm);font-size:13px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
-  /* SKILL GOALS */
-.skill-wrap{padding:20px 0}
-.skill-title{font-family:var(--fh);font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;padding:0 4px}
-.skill-sub{font-size:12px;color:var(--muted);margin-bottom:20px;padding:0 4px}
+  .skill-wrap{padding:20px 0}
+.skill-title{font-family:var(--fh);font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.skill-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
 .skill-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .skill-card-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .skill-emoji{font-size:28px}
@@ -258,7 +257,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .skill-target{font-size:11px;color:var(--muted);margin-top:2px}
 .skill-pct{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--accent)}
 .skill-bar-wrap{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:14px}
-.skill-bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;background:linear-gradient(90deg,var(--core),var(--accent))}
+.skill-bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease}
 .skill-questions{display:flex;flex-direction:column;gap:8px}
 .skill-q{background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px}
 .skill-q-text{font-size:12px;color:var(--text);margin-bottom:8px;line-height:1.4}
@@ -269,7 +268,6 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fm);ov
 .skill-q-btn.selected-no{background:rgba(245,90,140,0.15);border-color:var(--push);color:var(--push)}
 .skill-next{margin-top:12px;padding:10px 12px;background:rgba(90,140,245,0.1);border:1px solid rgba(90,140,245,0.2);border-radius:var(--r-sm);font-size:12px;color:var(--core);line-height:1.4}
 .skill-next-label{font-family:var(--fh);font-size:9px;letter-spacing:1.5px;color:var(--core);margin-bottom:4px}
-
 /* TIMER */
 .timer-bar{background:var(--surface2);border-radius:0 0 var(--r) var(--r);padding:10px 14px;border-top:1px solid var(--border)}
 .timer-display{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -1106,155 +1104,7 @@ function renderStreak(){ let total=0; Object.keys(state).forEach(k=>{ if(k.start
 
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth(), calSelected=null;
 function showHistory(){ document.getElementById('main-view').classList.add('hidden'); document.getElementById('history-view').classList.add('visible'); document.getElementById('evolution-view').classList.remove('visible'); document.getElementById('skill-view').style.display='none'; document.getElementById('nav-today').classList.remove('active'); document.getElementById('nav-hist').classList.add('active'); document.getElementById('nav-evo').classList.remove('active'); document.getElementById('nav-skill').classList.remove('active'); renderCalendar(); }
-
-// ── SKILL GOALS ─────────────────────────────────────────────
-const SKILLS = [
-  { id:'pullup', emoji:'🏋️', name:'Pull-up', target:'3×5 chin-up completi',
-    questions:[
-      { text:'Riesci a fare dead hang per 30 secondi?', next:'Allena dead hang 3×30" ogni giorno alla sbarra.' },
-      { text:'Riesci a fare 3×10 scapula pull alla sbarra?', next:'Aggiungi scapula pull come extra al giovedì.' },
-      { text:'Riesci a fare 3×6 chin-up negativi in 5 sec controllati?', next:'Concentrati sui negativi lenti — 5 sec di discesa.' },
-      { text:'Riesci a fare 3×5 trazioni con elastico pesante?', next:'Usa la banda più pesante e cerca di ridurla ogni 2 settimane.' }
-    ]},
-  { id:'dip', emoji:'💪', name:'Dip alle parallele', target:'3×8 dips parallele puliti',
-    questions:[
-      { text:'Riesci a fare 3×12 dips su sedia gambe tese?', next:'Aumenta le serie o aggiungi pausa 2 sec in basso.' },
-      { text:'Riesci a fare 3×8 dips elevati (piedi su seconda sedia)?', next:'Esegui i dips elevati come extra il lunedì.' },
-      { text:'Riesci a fare 3×5 dips assistiti con elastico alle parallele?', next:'Usa la banda più pesante e progredisci verso la più leggera.' },
-      { text:'Riesci a fare 3×3 dips alle parallele senza elastico?', next:'Sei quasi lì — aggiungi una rep alla volta ogni settimana.' }
-    ]},
-  { id:'dragonflag', emoji:'🐉', name:'Dragon Flag', target:'3×5 dragon flag completi',
-    questions:[
-      { text:'Riesci a fare 3×40" hollow body hold con gambe tese?', next:'Il hollow body è la base — costruiscilo fino a 60 secondi.' },
-      { text:'Riesci a fare 3×10 V-up puliti senza slancio?', next:'Aggiungi V-up come extra il mercoledì o venerdì.' },
-      { text:'Riesci a fare 3×5 dragon flag negativi scendendo in 5 sec?', next:'Scendi lentissimo usando il bordo del tavolo come appoggio.' },
-      { text:'Riesci a fare 3×3 dragon flag con gambe piegate (tuck)?', next:'Tuck dragon flag prima della versione completa.' }
-    ]},
-  { id:'headstand', emoji:'🙃', name:'Headstand', target:'Headstand libero 10 secondi',
-    questions:[
-      { text:'Riesci a fare tripod headstand (testa + mani a terra) per 10 secondi?', next:'Allenati contro il muro — metti la testa a terra e trova l'equilibrio.' },
-      { text:'Riesci a fare headstand al muro per 15 secondi?', next:'Usa il muro come sicurezza e cerca di staccarti per 1-2 sec.' },
-      { text:'Riesci a fare headstand al muro senza toccare il muro per 5 sec?', next:'Riduci il contatto col muro gradualmente ogni sessione.' },
-      { text:'Riesci a fare headstand libero per 3 secondi controllato?', next:'Sei vicino — allenati su superficie morbida per sicurezza.' }
-    ]},
-  { id:'hspu', emoji:'🔝', name:'Handstand Push-up', target:'3×5 HSPU al muro',
-    questions:[
-      { text:'Riesci a fare 3×8 pike push-up a terra ROM completo (testa tocca suolo)?', next:'Continua i pike a terra e aumenta la profondità ogni settimana.' },
-      { text:'Riesci a fare 3×8 pike push-up con piedi su sedia?', next:'Piedi su sedia = più verticale = più spalle. Aggiungi come extra.' },
-      { text:'Riesci a stare in handstand al muro per 20 secondi?', next:'Prima impara a stare in equilibrio, poi aggiungi il movimento.' },
-      { text:'Riesci a fare 3×3 HSPU negativi scendendo in 5 sec?', next:'Scendi lentissimo dal handstand — risali con le mani se necessario.' }
-    ]},
-  { id:'planche', emoji:'⚖️', name:'Planche', target:'Tuck planche 10 secondi',
-    questions:[
-      { text:'Riesci a fare planche lean per 20 secondi con spalle oltre i polsi?', next:'Planche lean ogni giorno — sposta le spalle sempre più avanti.' },
-      { text:'Riesci a fare 3×8 pseudo planche push-up?', next:'Mani ruotate verso i piedi, spalle oltre i polsi, spingi.' },
-      { text:'Riesci a fare tuck planche per 3 secondi con ginocchia al petto?', next:'Spingi il suolo in basso, spalle avanti, ginocchia al petto.' },
-      { text:'Riesci a fare tuck planche per 5 secondi con controllo?', next:'Sei vicino all'obiettivo — lavora sulla protrazione scapolare.' }
-    ]},
-  { id:'humanflag', emoji:'🚩', name:'Human Flag', target:'Human flag 3 secondi',
-    questions:[
-      { text:'Riesci a fare 3×15" plank laterale stella per lato?', next:'La forza laterale è la base — costruisci il side plank stella.' },
-      { text:'Riesci a fare 3×8 side plank KB row per lato?', next:'Aggiungi il row in side plank come extra il mercoledì.' },
-      { text:'Riesci a fare human flag assistito (piede al palo) per 5 sec?', next:'Usa un palo o stipite robusto con un piede di appoggio.' },
-      { text:'Riesci a fare human flag con gambe piegate per 3 sec?', next:'Gambe piegate = leva più corta = più facile. Poi stendile.' }
-    ]}
-];
-
-let skillAnswers = {};
-
-function loadSkillAnswers(){
-  try { skillAnswers = JSON.parse(localStorage.getItem('z2h_skills')||'{}'); } catch(e){ skillAnswers={}; }
-}
-function saveSkillAnswers(){
-  localStorage.setItem('z2h_skills', JSON.stringify(skillAnswers));
-}
-function setSkillAnswer(skillId, qIdx, val){
-  if(!skillAnswers[skillId]) skillAnswers[skillId]={};
-  skillAnswers[skillId][qIdx]=val;
-  saveSkillAnswers();
-  renderSkillGoals();
-}
-function getSkillPct(skillId, questions){
-  if(!skillAnswers[skillId]) return 0;
-  let total=0;
-  questions.forEach((_,i)=>{
-    const a=skillAnswers[skillId][i];
-    if(a==='yes') total+=25;
-    else if(a==='maybe') total+=12;
-  });
-  return Math.min(total,100);
-}
-function getNextStep(skillId, questions){
-  if(!skillAnswers[skillId]) return questions[0].next;
-  for(let i=0;i<questions.length;i++){
-    const a=skillAnswers[skillId][i];
-    if(!a||a==='no'||a==='maybe') return questions[i].next;
-  }
-  return '🏆 Obiettivo raggiunto! Passa al livello successivo.';
-}
-
-function showSkillGoals(){
-  document.getElementById('main-view').classList.add('hidden');
-  document.getElementById('history-view').classList.remove('visible');
-  document.getElementById('evolution-view').classList.remove('visible');
-  document.getElementById('skill-view').style.display='block';
-  document.getElementById('nav-today').classList.remove('active');
-  document.getElementById('nav-hist').classList.remove('active');
-  document.getElementById('nav-evo').classList.remove('active');
-  document.getElementById('nav-skill').classList.add('active');
-  renderSkillGoals();
-}
-
-function renderSkillGoals(){
-  loadSkillAnswers();
-  let html=`<div class="skill-wrap"><div class="skill-title">🎯 Skill Goals</div><div class="skill-sub">Valuta onestamente dove sei — aggiorna ogni mese</div>`;
-  SKILLS.forEach(skill=>{
-    const pct=getSkillPct(skill.id, skill.questions);
-    const nextStep=getNextStep(skill.id, skill.questions);
-    const barColor=pct>=100?'var(--accent)':pct>=50?'var(--legs)':'var(--core)';
-    html+=`<div class="skill-card">
-      <div class="skill-card-header">
-        <div class="skill-emoji">${skill.emoji}</div>
-        <div class="skill-info">
-          <div class="skill-name">${skill.name}</div>
-          <div class="skill-target">${skill.target}</div>
-        </div>
-        <div class="skill-pct">${pct}%</div>
-      </div>
-      <div class="skill-bar-wrap"><div class="skill-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
-      <div class="skill-questions">`;
-    skill.questions.forEach((q,i)=>{
-      const ans=skillAnswers[skill.id]?skillAnswers[skill.id][i]:'';
-      html+=`<div class="skill-q">
-        <div class="skill-q-text">${i+1}. ${q.text}</div>
-        <div class="skill-q-btns">
-          <button class="skill-q-btn ${ans==='yes'?'selected-yes':''}" onclick="setSkillAnswer('${skill.id}',${i},'yes')">✓ Sì</button>
-          <button class="skill-q-btn ${ans==='maybe'?'selected-maybe':''}" onclick="setSkillAnswer('${skill.id}',${i},'maybe')">~ A fatica</button>
-          <button class="skill-q-btn ${ans==='no'?'selected-no':''}" onclick="setSkillAnswer('${skill.id}',${i},'no')">✗ No</button>
-        </div>
-      </div>`;
-    });
-    html+=`</div>
-      <div class="skill-next"><div class="skill-next-label">PROSSIMO STEP</div>${nextStep}</div>
-    </div>`;
-  });
-  html+=`</div>`;
-  document.getElementById('skill-content').innerHTML=html;
-}
-
-function showMain(){
-  document.getElementById('main-view').classList.remove('hidden');
-  document.getElementById('history-view').classList.remove('visible');
-  document.getElementById('evolution-view').classList.remove('visible');
-  document.getElementById('skill-view').style.display='none';
-  document.getElementById('nav-today').classList.add('active');
-  document.getElementById('nav-hist').classList.remove('active');
-  document.getElementById('nav-evo').classList.remove('active');
-  document.getElementById('nav-skill').classList.remove('active');
-}
-
-// showMain ridefinita sopra
-function _showMain_placeholder(){ document.getElementById('history-view').classList.remove('visible'); document.getElementById('evolution-view').classList.remove('visible'); document.getElementById('nav-today').classList.add('active'); document.getElementById('nav-hist').classList.remove('active'); document.getElementById('nav-evo').classList.remove('active'); calSelected=null; }
+function showMain(){ document.getElementById('main-view').classList.remove('hidden'); document.getElementById('history-view').classList.remove('visible'); document.getElementById('evolution-view').classList.remove('visible'); document.getElementById('skill-view').style.display='none'; document.getElementById('nav-today').classList.add('active'); document.getElementById('nav-hist').classList.remove('active'); document.getElementById('nav-evo').classList.remove('active'); document.getElementById('nav-skill').classList.remove('active'); calSelected=null; }
 function renderCalendar(){ renderCalHeader(); renderCalGrid(); if(calSelected) renderCalDetail(calSelected); else document.getElementById('cal-detail').innerHTML=''; }
 function renderCalHeader(){ const m=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']; document.getElementById('cal-header').innerHTML=`<div class="cal-header"><button class="cal-nav" onclick="calPrev()">‹</button><div class="cal-month">${m[calMonth]} ${calYear}</div><button class="cal-nav" onclick="calNext()">›</button></div>`; }
 function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} calSelected=null; renderCalendar(); }
@@ -1334,6 +1184,60 @@ function renderEvolution(){
   EVO_STAGES.forEach((s,i)=>{const u=w>=s.weeksMin&&l>=s.levelsMin;const ic=i===ci;const sc=ic?'current':u?'unlocked':'locked';const b=ic?'<span class="evo-badge now">ORA</span>':u?'<span class="evo-badge done">✓</span>':'<span class="evo-badge locked">🔒</span>';html+=`<div class="evo-stage ${sc}"><div class="evo-figure">${s.emoji}</div><div class="evo-info"><div class="evo-stage-name">${s.name}</div><div class="evo-stage-desc">${s.desc}</div><div class="evo-stage-req">📍 ${s.req}</div></div>${b}</div>`;});
   html+=`</div>`; document.getElementById('evo-content').innerHTML=html;
 }
+
+
+const SKILLS=[
+  {id:'pullup',emoji:'🏋️',name:'Pull-up',target:'3x5 chin-up completi',questions:[
+    {text:'Riesci a fare dead hang per 30 secondi?',next:'Allena dead hang 3x30" ogni sessione alla sbarra.'},
+    {text:'Riesci a fare 3x10 scapula pull alla sbarra?',next:'Aggiungi scapula pull come extra al giovedi.'},
+    {text:'Riesci a fare 3x6 chin-up negativi in 5 sec controllati?',next:'5 sec di discesa controllata - qualita prima di tutto.'},
+    {text:'Riesci a fare 3x5 trazioni con elastico pesante?',next:'Usa la banda piu pesante, riducila ogni 2 settimane.'}
+  ]},
+  {id:'dip',emoji:'💪',name:'Dip alle parallele',target:'3x8 dips parallele puliti',questions:[
+    {text:'Riesci a fare 3x12 dips su sedia gambe tese?',next:'Aggiungi pausa 2 sec in basso per aumentare intensita.'},
+    {text:'Riesci a fare 3x8 dips elevati (piedi su seconda sedia)?',next:'Esegui dips elevati come extra il lunedi.'},
+    {text:'Riesci a fare 3x5 dips assistiti con elastico alle parallele?',next:'Usa la banda piu pesante e progredisci verso la piu leggera.'},
+    {text:'Riesci a fare 3x3 dips alle parallele senza elastico?',next:'Sei quasi li - aggiungi una rep alla volta ogni settimana.'}
+  ]},
+  {id:'dragonflag',emoji:'🐉',name:'Dragon Flag',target:'3x5 dragon flag completi',questions:[
+    {text:'Riesci a fare 3x40" hollow body hold con gambe tese?',next:'Costruisci il hollow hold fino a 60 sec - base del dragon flag.'},
+    {text:'Riesci a fare 3x10 V-up puliti senza slancio?',next:'Aggiungi V-up come extra il mercoledi o venerdi.'},
+    {text:'Riesci a fare 3x5 dragon flag negativi scendendo in 5 sec?',next:'Scendi lentissimo aggrappato al bordo del tavolo.'},
+    {text:'Riesci a fare 3x3 dragon flag con gambe piegate (tuck)?',next:'Tuck dragon flag prima della versione completa.'}
+  ]},
+  {id:'headstand',emoji:'🙃',name:'Headstand',target:'Headstand libero 10 secondi',questions:[
+    {text:'Riesci a fare tripod headstand (testa + mani a terra) per 10 sec?',next:'Inizia contro il muro - testa a terra, trova equilibrio con le mani.'},
+    {text:'Riesci a fare headstand al muro per 15 secondi?',next:'Usa il muro come sicurezza e staccati per 1-2 sec alla volta.'},
+    {text:'Riesci a fare headstand al muro senza toccare per 5 sec?',next:'Riduci il contatto col muro ogni sessione.'},
+    {text:'Riesci a fare headstand libero per 3 sec controllato?',next:'Allenati su superficie morbida per sicurezza.'}
+  ]},
+  {id:'hspu',emoji:'🔝',name:'Handstand Push-up',target:'3x5 HSPU al muro',questions:[
+    {text:'Riesci a fare 3x8 pike push-up a terra ROM completo (testa tocca suolo)?',next:'Continua i pike a terra - aumenta profondita ogni settimana.'},
+    {text:'Riesci a fare 3x8 pike push-up con piedi su sedia?',next:'Piedi su sedia - piu verticale - piu spalle. Aggiungi come extra.'},
+    {text:'Riesci a stare in handstand al muro per 20 secondi?',next:'Prima impara a stare in equilibrio, poi aggiungi il movimento.'},
+    {text:'Riesci a fare 3x3 HSPU negativi scendendo in 5 sec?',next:'Scendi lentissimo - risali con le mani se necessario.'}
+  ]},
+  {id:'planche',emoji:'⚖️',name:'Planche',target:'Tuck planche 10 secondi',questions:[
+    {text:'Riesci a fare planche lean per 20 sec con spalle oltre i polsi?',next:'Planche lean ogni giorno - sposta le spalle sempre piu avanti.'},
+    {text:'Riesci a fare 3x8 pseudo planche push-up?',next:'Mani ruotate verso i piedi, spalle oltre i polsi, spingi.'},
+    {text:'Riesci a fare tuck planche per 3 sec con ginocchia al petto?',next:'Spingi il suolo in basso, spalle avanti, ginocchia al petto.'},
+    {text:'Riesci a fare tuck planche per 5 sec con controllo?',next:'Sei vicino - lavora sulla protrazione scapolare.'}
+  ]},
+  {id:'humanflag',emoji:'🚩',name:'Human Flag',target:'Human flag 3 secondi',questions:[
+    {text:'Riesci a fare 3x15" plank laterale stella per lato?',next:'La forza laterale e la base - costruisci il side plank stella.'},
+    {text:'Riesci a fare 3x8 side plank KB row per lato?',next:'Aggiungi il row in side plank come extra il mercoledi.'},
+    {text:'Riesci a fare human flag assistito (piede al palo) per 5 sec?',next:'Usa un palo o stipite robusto con un piede di appoggio.'},
+    {text:'Riesci a fare human flag con gambe piegate per 3 sec?',next:'Gambe piegate - leva piu corta - poi stendile gradualmente.'}
+  ]}
+];
+let skillAnswers={};
+function loadSkillAnswers(){ try{skillAnswers=JSON.parse(localStorage.getItem('z2h_skills')||'{}');}catch(e){skillAnswers={};} }
+function saveSkillAnswers(){ localStorage.setItem('z2h_skills',JSON.stringify(skillAnswers)); }
+function setSkillAnswer(skillId,qIdx,val){ if(!skillAnswers[skillId])skillAnswers[skillId]={}; skillAnswers[skillId][qIdx]=val; saveSkillAnswers(); renderSkillGoals(); }
+function getSkillPct(skillId,questions){ if(!skillAnswers[skillId])return 0; let t=0; questions.forEach((_,i)=>{ const a=skillAnswers[skillId][i]; if(a==='yes')t+=25; else if(a==='maybe')t+=12; }); return Math.min(t,100); }
+function getNextStep(skillId,questions){ if(!skillAnswers[skillId])return questions[0].next; for(let i=0;i<questions.length;i++){ const a=skillAnswers[skillId][i]; if(!a||a==='no'||a==='maybe')return questions[i].next; } return 'Obiettivo raggiunto! Sei pronto per il prossimo livello.'; }
+function showSkillGoals(){ document.getElementById('main-view').classList.add('hidden'); document.getElementById('history-view').classList.remove('visible'); document.getElementById('evolution-view').classList.remove('visible'); document.getElementById('skill-view').style.display='block'; document.getElementById('nav-today').classList.remove('active'); document.getElementById('nav-hist').classList.remove('active'); document.getElementById('nav-evo').classList.remove('active'); document.getElementById('nav-skill').classList.add('active'); renderSkillGoals(); }
+function renderSkillGoals(){ loadSkillAnswers(); let html='<div class="skill-wrap"><div class="skill-title">Skill Goals</div><div class="skill-sub">Valuta onestamente dove sei - aggiorna ogni mese</div>'; SKILLS.forEach(skill=>{ const pct=getSkillPct(skill.id,skill.questions); const next=getNextStep(skill.id,skill.questions); const bc=pct>=100?'var(--accent)':pct>=50?'var(--legs)':'var(--core)'; html+=`<div class="skill-card"><div class="skill-card-header"><div class="skill-emoji">${skill.emoji}</div><div class="skill-info"><div class="skill-name">${skill.name}</div><div class="skill-target">${skill.target}</div></div><div class="skill-pct">${pct}%</div></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width:${pct}%;background:${bc}"></div></div><div class="skill-questions">`; skill.questions.forEach((q,i)=>{ const ans=skillAnswers[skill.id]?skillAnswers[skill.id][i]:''; html+=`<div class="skill-q"><div class="skill-q-text">${i+1}. ${q.text}</div><div class="skill-q-btns"><button class="skill-q-btn ${ans==='yes'?'selected-yes':''}" onclick="setSkillAnswer('${skill.id}',${i},'yes')">Si</button><button class="skill-q-btn ${ans==='maybe'?'selected-maybe':''}" onclick="setSkillAnswer('${skill.id}',${i},'maybe')">A fatica</button><button class="skill-q-btn ${ans==='no'?'selected-no':''}" onclick="setSkillAnswer('${skill.id}',${i},'no')">No</button></div></div>`; }); html+=`</div><div class="skill-next"><div class="skill-next-label">PROSSIMO STEP</div>${next}</div></div>`; }); html+='</div>'; document.getElementById('skill-content').innerHTML=html; }
 
 function renderAll(){ renderTabs(); renderDay(); renderStreak(); }
 function updateDate(){ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); }
