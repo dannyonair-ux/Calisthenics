@@ -493,9 +493,10 @@ const CHAINS = {
       ]},
     { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x6 pike elevati con pausa",
       levels:[
-        { name:"Handstand push-up muro (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Pancia al muro.", muscles:"Spalle · Tricipiti · Core", steps:["Calciata pancia al muro","Mani 15cm dal muro","Scendi controllato","Spingi su"], ytq:"chest to wall HSPU" },
-        { name:"HSPU muro (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"3 min", iso:false, tip:"Volume aumentato.", muscles:"Spalle · Tricipiti", steps:["Stessa forma","8 rip pulite","Controllo totale","No crollo"], ytq:"HSPU wall volume" },
-        { name:"HSPU libero al muro (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Schiena al muro, più difficile.", muscles:"Spalle · Core (élite)", steps:["Calciata schiena al muro","Scendi controllato","Testa a terra","Spingi su"], ytq:"back to wall HSPU" }
+        { name:"Pike push-up a terra (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"V stretta, testa avanti alle mani.", muscles:"Spalle · Tricipiti", steps:["Corpo a V stretta","Testa tocca terra avanti","Gomiti a 45°","Spingi forte"], ytq:"pike push up full ROM" },
+        { name:"Pike push-up piedi su sedia (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi su sedia, quasi verticale.", muscles:"Spalle (alta intensità)", steps:["Piedi su sedia","Corpo a V stretta","Testa tra le mani","Spingi forte"], ytq:"pike push up feet on chair" },
+        { name:"Handstand push-up muro (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Pancia al muro. Solo quando pike su sedia è solido.", muscles:"Spalle · Tricipiti · Core", steps:["Calciata pancia al muro","Mani 15cm dal muro","Scendi controllato","Spingi su"], ytq:"chest to wall HSPU" },
+        { name:"HSPU muro (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"3 min", iso:false, tip:"Volume aumentato.", muscles:"Spalle · Tricipiti", steps:["Stessa forma","8 rip pulite","Controllo totale","No crollo"], ytq:"HSPU wall volume" }
       ]}
   ]},
   plank: { name:"Plank & Core Spinta", phases:[
@@ -618,13 +619,13 @@ const CHAINS = {
       levels:[
         { name:"Wall sit (3×60\")", sets:3, reps:60, sets_label:"3 × 60 sec", rest:"2 min", iso:true, tip:"1 minuto.", muscles:"Quadricipiti · Mentale", steps:["90° perfetti","60 secondi","Respira","Non cedere"], ytq:"wall sit 60 seconds" },
         { name:"Wall sit KB (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"90 sec", iso:true, tip:"KB al petto.", muscles:"Quadricipiti · Core", steps:["KB 12kg al petto","Wall sit 90°","Tieni 30 sec","Respira"], ytq:"wall sit kettlebell" },
-        { name:"Wall sit 1 gamba (3×15\"/gamba)", sets:3, reps:15, sets_label:"3 × 15\"/gamba", rest:"90 sec", iso:true, tip:"Una gamba tesa.", muscles:"Quadricipiti (unilaterale)", steps:["Wall sit","Estendi una gamba","Tieni 15 sec","Cambia"], ytq:"single leg wall sit" }
+        { name:"Wall sit 1 gamba (3×15\"/gamba)", sets:3, reps:15, sets_label:"3 × 15\"/gamba", rest:"90 sec", iso:true, sides:2, tip:"Una gamba tesa.", muscles:"Quadricipiti (unilaterale)", steps:["Wall sit","Estendi una gamba","Tieni 15 sec","Cambia"], ytq:"single leg wall sit" }
       ]},
     { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x15\" wall sit 1 gamba",
       levels:[
         { name:"Wall sit (3×90\")", sets:3, reps:90, sets_label:"3 × 90 sec", rest:"2 min", iso:true, tip:"90 secondi.", muscles:"Quadricipiti (élite)", steps:["90° perfetti","90 secondi","Mentale > fisico","Respira"], ytq:"wall sit 90 seconds" },
-        { name:"Wall sit 1 gamba (3×25\"/gamba)", sets:3, reps:25, sets_label:"3 × 25\"/gamba", rest:"2 min", iso:true, tip:"Resistenza unilaterale.", muscles:"Quadricipiti (max)", steps:["Una gamba tesa","25 sec","No cedimento","Respira"], ytq:"single leg wall sit advanced" },
-        { name:"Wall sit KB 1 gamba (3×15\"/gamba)", sets:3, reps:15, sets_label:"3 × 15\"/gamba", rest:"2 min", iso:true, tip:"KB + 1 gamba.", muscles:"Quadricipiti · Core (élite)", steps:["KB al petto","Una gamba tesa","15 sec","Cambia"], ytq:"weighted single leg wall sit" }
+        { name:"Wall sit 1 gamba (3×25\"/gamba)", sets:3, reps:25, sets_label:"3 × 25\"/gamba", rest:"2 min", iso:true, sides:2, tip:"Resistenza unilaterale.", muscles:"Quadricipiti (max)", steps:["Una gamba tesa","25 sec","No cedimento","Respira"], ytq:"single leg wall sit advanced" },
+        { name:"Wall sit KB 1 gamba (3×15\"/gamba)", sets:3, reps:15, sets_label:"3 × 15\"/gamba", rest:"2 min", iso:true, sides:2, tip:"KB + 1 gamba.", muscles:"Quadricipiti · Core (élite)", steps:["KB al petto","Una gamba tesa","15 sec","Cambia"], ytq:"weighted single leg wall sit" }
       ]}
   ]},
   crunch: { name:"Crunch & Addominali", phases:[
@@ -733,21 +734,21 @@ const CHAINS = {
   sideplank: { name:"Plank Laterale", phases:[
     { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x25\" plank laterale completo",
       levels:[
-        { name:"Plank lat. modificato (3×20\"/lato)", sets:3, reps:20, sets_label:"3 × 20\"/lato", rest:"60 sec", iso:true, tip:"Ginocchio a terra.", muscles:"Obliqui", steps:["Avambraccio a terra","Ginocchio basso","Fianchi su","No rotazione"], ytq:"modified side plank" },
-        { name:"Plank lat. completo (3×25\"/lato)", sets:3, reps:25, sets_label:"3 × 25\"/lato", rest:"90 sec", iso:true, tip:"Piedi uniti.", muscles:"Obliqui · Spalla", steps:["Avambraccio","Piedi uniti","Fianchi alti","Respira"], ytq:"side plank full" },
+        { name:"Plank lat. modificato (3×20\"/lato)", sets:3, reps:20, sets_label:"3 × 20\"/lato", rest:"60 sec", iso:true, sides:2, tip:"Ginocchio a terra.", muscles:"Obliqui", steps:["Avambraccio a terra","Ginocchio basso","Fianchi su","No rotazione"], ytq:"modified side plank" },
+        { name:"Plank lat. completo (3×25\"/lato)", sets:3, reps:25, sets_label:"3 × 25\"/lato", rest:"90 sec", iso:true, sides:2, tip:"Piedi uniti.", muscles:"Obliqui · Spalla", steps:["Avambraccio","Piedi uniti","Fianchi alti","Respira"], ytq:"side plank full" },
         { name:"Plank lat. hip dip (3×12/lato)", sets:3, reps:12, sets_label:"3 × 12/lato", rest:"90 sec", iso:false, tip:"Abbassa e risolleva.", muscles:"Obliqui (dinamico)", steps:["Plank laterale","Abbassa fianco","Risolleva","No rotazione"], ytq:"side plank hip dip" },
         { name:"Plank lat. rotazione (3×10/lato)", sets:3, reps:10, sets_label:"3 × 10/lato", rest:"90 sec", iso:false, tip:"Braccio sotto.", muscles:"Obliqui · Mobilità", steps:["Plank laterale","Braccio ruota sotto","Torna su","Fianchi alti"], ytq:"side plank thread needle" }
       ]},
     { id:2, name:"Fase 2: Forza & Stabilità", unlockReq:"3x10/lato rotazione pulito",
       levels:[
-        { name:"Plank lat. (3×35\"/lato)", sets:3, reps:35, sets_label:"3 × 35\"/lato", rest:"90 sec", iso:true, tip:"35 sec.", muscles:"Obliqui", steps:["Plank laterale","35 sec","Fianchi alti","Respira"], ytq:"side plank 35 seconds" },
-        { name:"Plank lat. stella (3×15\"/lato)", sets:3, reps:15, sets_label:"3 × 15\"/lato", rest:"90 sec", iso:true, tip:"Gamba e braccio su.", muscles:"Obliqui · Gluteo medio", steps:["Plank laterale","Gamba su, braccio su","Stella","Tieni 15 sec"], ytq:"star side plank" },
+        { name:"Plank lat. (3×35\"/lato)", sets:3, reps:35, sets_label:"3 × 35\"/lato", rest:"90 sec", iso:true, sides:2, tip:"35 sec.", muscles:"Obliqui", steps:["Plank laterale","35 sec","Fianchi alti","Respira"], ytq:"side plank 35 seconds" },
+        { name:"Plank lat. stella (3×15\"/lato)", sets:3, reps:15, sets_label:"3 × 15\"/lato", rest:"90 sec", iso:true, sides:2, tip:"Gamba e braccio su.", muscles:"Obliqui · Gluteo medio", steps:["Plank laterale","Gamba su, braccio su","Stella","Tieni 15 sec"], ytq:"star side plank" },
         { name:"Plank lat. hip dip (3×15/lato)", sets:3, reps:15, sets_label:"3 × 15/lato", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Obliqui", steps:["Stessa forma","15 per lato","Controllo","No cedimento"], ytq:"side plank hip dip volume" }
       ]},
     { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x15\"/lato stella",
       levels:[
-        { name:"Plank lat. (3×45\"/lato)", sets:3, reps:45, sets_label:"3 × 45\"/lato", rest:"2 min", iso:true, tip:"45 sec.", muscles:"Obliqui (élite)", steps:["Plank laterale","45 sec","Fianchi perfetti","Respira"], ytq:"side plank 45 seconds" },
-        { name:"Plank lat. stella (3×25\"/lato)", sets:3, reps:25, sets_label:"3 × 25\"/lato", rest:"2 min", iso:true, tip:"25 sec stella.", muscles:"Obliqui · Gluteo medio", steps:["Stella","25 sec","No cedimento","Respira"], ytq:"star side plank advanced" },
+        { name:"Plank lat. (3×45\"/lato)", sets:3, reps:45, sets_label:"3 × 45\"/lato", rest:"2 min", iso:true, sides:2, tip:"45 sec.", muscles:"Obliqui (élite)", steps:["Plank laterale","45 sec","Fianchi perfetti","Respira"], ytq:"side plank 45 seconds" },
+        { name:"Plank lat. stella (3×25\"/lato)", sets:3, reps:25, sets_label:"3 × 25\"/lato", rest:"2 min", iso:true, sides:2, tip:"25 sec stella.", muscles:"Obliqui · Gluteo medio", steps:["Stella","25 sec","No cedimento","Respira"], ytq:"star side plank advanced" },
         { name:"Side plank KB row (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"2 min", iso:false, tip:"Remata in side plank.", muscles:"Obliqui · Dorsali", steps:["Side plank","KB in mano libera","Remata","Fianchi fermi"], ytq:"side plank row kettlebell" }
       ]}
   ]},
@@ -948,27 +949,27 @@ function renderSuggestPanel(di){
 // ── GIORNI ───────────────────────────────────────────────
 const DAYS = [
   { label:"LUN", name:"Giorno 1", title:"Petto · Spalle · Tricipiti", type:"push", color:"var(--push)",
-    warmup:[{icon:"",text:"5 minuti riscaldamento",note:"Corpo rigido a quest'ora"},{icon:"",text:"Rotazioni spalle",note:"10 per direzione"},{icon:"🤸",text:"Aperture orizzontali",note:"15 rip"},{icon:"🚶",text:"Marcia sul posto",note:"30 sec"},{icon:"💪",text:"5 flessioni lente",note:"Solo attivazione"}],
+    warmup:[{icon:"🌅",text:"5 min mobilità generale",note:"Non saltare — muscoli freddi alle 6"},{icon:"🔄",text:"Rotazioni spalle avanti e indietro",note:"10 per direzione, ampie"},{icon:"🤸",text:"Aperture orizzontali",note:"15 rip lente, senti il petto aprirsi"},{icon:"💪",text:"Push-up al muro 10 rip",note:"Solo attivazione, non fatica"},{icon:"🧘",text:"Planche lean 2×10" sullo stipite",note:"Attiva spalle anteriori per i pike"}],
     cooldown:[{icon:"🧘",text:"Stretching petto",note:"30 sec"},{icon:"💆",text:"Allungamento tricipiti",note:"20 sec/braccio"},{icon:"🔄",text:"Rotazioni collo",note:"5 per lato"},{icon:"🤲",text:"Shake braccia",note:"10 sec"}],
     restNote:"⏱ Riposo: 90 sec normali · 2 min difficili",
     exercises:[{chain:'pushup'},{chain:'dips'},{chain:'wallpushup_shoulder'},{chain:'plank'}] },
   { label:"MAR", name:"Giorno 2", title:"Gambe · Glutei", type:"legs", color:"var(--legs)",
-    warmup:[{icon:"⏱",text:"5 minuti riscaldamento",note:"Gambe grandi = più attivazione"},{icon:"🚶",text:"Marcia ginocchia alte",note:"30 sec"},{icon:"🔄",text:"Rotazioni anche",note:"10 per direzione"},{icon:"🪑",text:"5 squat lentissimi",note:"Solo lubrificare"},{icon:"",text:"5 affondi lenti/gamba",note:"Ginocchio a terra"}],
+    warmup:[{icon:"🦵",text:"5 min attivazione gambe",note:"Gambe grandi bruciano più calorie — attivale bene"},{icon:"🚶",text:"Marcia ginocchia alte",note:"30 sec, porta le ginocchia all'altezza dei fianchi"},{icon:"🔄",text:"Rotazioni anche e caviglie",note:"10 cerchi per direzione"},{icon:"🪑",text:"5 squat lentissimi 5 sec giù",note:"Lubrica le ginocchia prima di caricare"},{icon:"🏃",text:"5 affondi lenti per gamba",note:"Ginocchio quasi a terra, senti lo stretch"}],
     cooldown:[{icon:"🧘",text:"Stretching quadricipiti",note:"30 sec/gamba"},{icon:"🦵",text:"Stretching femorali",note:"30 sec/gamba"},{icon:"",text:"Stretching hip flexor",note:"20 sec/lato"},{icon:"",text:"Allungamento polpacci",note:"20 sec/gamba"}],
     restNote:" Riposo: 90 sec · 2 min unilaterali",
     exercises:[{chain:'squat'},{chain:'lunge'},{chain:'glutebridge'},{chain:'calfrise'},{chain:'wallsit'}] },
   { label:"MER", name:"Giorno 3", title:"Core · Addominali", type:"core", color:"var(--core)",
-    warmup:[{icon:"⏱",text:"5 minuti riscaldamento",note:"Core sempre attivo"},{icon:"🚶",text:"Marcia 30 sec",note:"Ginocchia alte"},{icon:"",text:"Rotazioni busto",note:"10 per lato"},{icon:"🐱",text:"Cat-cow",note:"10 rip"},{icon:"↔️",text:"Estensioni laterali",note:"10 per lato"}],
+    warmup:[{icon:"🧘",text:"5 min mobilità colonna",note:"Core = centro di tutto, trattalo con rispetto"},{icon:"🐱",text:"Cat-cow lento",note:"10 rip, senti ogni vertebra"},{icon:"🔄",text:"Rotazioni busto",note:"10 per lato con braccio esteso"},{icon:"↔️",text:"Estensioni laterali con braccio su",note:"10 per lato, senti gli obliqui"},{icon:"🤸",text:"Dead bug 5 rip per lato",note:"Attiva il core profondo prima di tutto"}],
     cooldown:[{icon:"",text:"Posa del bambino",note:"30 sec"},{icon:"🐍",text:"Cobra stretch",note:"20 sec"},{icon:"↔️",text:"Stretching laterale",note:"20 sec/lato"},{icon:"",text:"Torsione supina",note:"20 sec/lato"}],
     restNote:"⏱ Riposo: 60 sec · 90 sec avanzate",
     exercises:[{chain:'crunch'},{chain:'reversecrunch'},{chain:'mountainclimber'},{chain:'hollowbody'},{chain:'superman'},{chain:'sideplank'}] },
   { label:"GIO", name:"Giorno 4", title:"Schiena · Bicipiti", type:"pull", color:"var(--pull)",
-    warmup:[{icon:"⏱",text:"5 minuti riscaldamento",note:"Schiena delicata"},{icon:"",text:"Rotazioni spalle indietro",note:"15 ampie"},{icon:"🤸",text:"Aperture torace",note:"15 rip"},{icon:"",text:"Air row",note:"10 rip lente"},{icon:"↔️",text:"Inclinazioni laterali",note:"10 per lato"}],
+    warmup:[{icon:"🦅",text:"5 min attivazione schiena",note:"La schiena va riscaldata con cura — niente strappi"},{icon:"🔄",text:"Rotazioni spalle ampie indietro",note:"15 rip, le spalle si aprono"},{icon:"🤸",text:"Aperture torace con braccio esteso",note:"15 rip lente"},{icon:"🏋️",text:"Air row lento",note:"10 rip immaginando la sbarra, attiva scapole"},{icon:"💪",text:"Dead hang 20"",note:"Scalda presa e decomprime la colonna"}],
     cooldown:[{icon:"💪",text:"Stretching bicipiti",note:"20 sec/braccio"},{icon:"🧘",text:"Bambino laterale",note:"20 sec/lato"},{icon:"🔄",text:"Rotazioni spalle",note:"10 per direzione"},{icon:"🤲",text:"Intreccia dita, spingi",note:"20 sec"}],
     restNote:"⏱ Riposo: 2 min (schiena = più recupero)",
     exercises:[{chain:'invertedrow'},{chain:'doorframerow'},{chain:'supermanvol'},{chain:'towelcurl'}] },
   { label:"VEN", name:"Giorno 5", title:"Full Body · Cardio", type:"full", color:"var(--full)",
-    warmup:[{icon:"",text:"5 minuti riscaldamento",note:"Tutto il corpo"},{icon:"🚶",text:"Marcia ginocchia alte",note:"30 sec"},{icon:"🏃",text:"High knees camminati",note:"20 rip"},{icon:"🪑",text:"10 squat lenti",note:"3s giù 3s su"},{icon:"💪",text:"5 flessioni attivazione",note:"Solo attivare"}],
+    warmup:[{icon:"⚡",text:"5 min riscaldamento completo",note:"Full body = tutto deve essere pronto"},{icon:"🚶",text:"Marcia ginocchia alte 30 sec",note:"Porta le ginocchia sopra i fianchi"},{icon:"🏃",text:"Jumping jacks camminati 20 rip",note:"Senza salto — rispetta il condominio"},{icon:"🪑",text:"10 squat lenti 3s giù 3s su",note:"Lubrica ginocchia e anche"},{icon:"💪",text:"5 flessioni lente attivazione",note:"Senti il petto e le spalle accendersi"}],
     cooldown:[{icon:"🧘",text:"Stretching completo 7 min",note:"Hai lavorato tutto"},{icon:"🦵",text:"Quadricipiti",note:"30 sec/gamba"},{icon:"🦵",text:"Femorali",note:"30 sec/gamba"},{icon:"",text:"Petto",note:"30 sec"},{icon:"🤸",text:"Dorsali",note:"20 sec"},{icon:"🌬️",text:"5 respiri profondi",note:"4-2-6"}],
     restNote:"⏱ Riposo: 90 sec · No riposo AMRAP",
     exercises:[{chain:'burpee'},{chain:'fullsquat'},{chain:'inchworm'},{chain:'amrap'}] },
