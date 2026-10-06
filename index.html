@@ -940,6 +940,69 @@ const CHAINS = {
         { name:"AMRAP 15 min (8+12+15)", sets:1, reps:0, sets_label:"15 min", rest:"5 min dopo", iso:false, amrap:true, amrapMins:15, tip:"8 man-maker → 12 bulgari → 15 hollow rocks.", muscles:"Full body (élite)", steps:["8 man-maker KB","12 bulgari","15 hollow rocks","Ripeti 15 min"], ytq:"AMRAP 15 min challenge" },
         { name:"AMRAP 20 min (10+15+20)", sets:1, reps:0, sets_label:"20 min", rest:"5 min dopo", iso:false, amrap:true, amrapMins:20, tip:"10 burpee → 15 KB swing → 20 hollow rocks.", muscles:"Full body (maestria)", steps:["10 burpee","15 KB swing","20 hollow rocks","Ripeti 20 min"], ytq:"AMRAP 20 min ultimate" }
       ]}
+  ]},
+
+  lsit: { name:"L-sit", phases:[
+    { id:1, name:"Fase 1: Fondamenta", unlockReq:"Sollevare il sedere 3 sec",
+      levels:[
+        { name:"L-sit seduto sollevamento (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"60 sec", iso:true, tip:"Mani ai fianchi, spingi e solleva il sedere.", muscles:"Tricipiti · Core · Spalle", steps:["Siediti a terra con le mani ai fianchi","Dita rivolte in avanti o leggermente verso l esterno","Spingi le mani contro il suolo sollevando il sedere","Tieni 5 sec - anche solo 1cm di altezza conta"], ytq:"L-sit floor progression" },
+        { name:"L-sit seduto (3x8")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"60 sec", iso:true, tip:"Aumenta il tempo di tenuta.", muscles:"Tricipiti · Core", steps:["Stessa posizione - mani ai fianchi a terra","Spingi forte sollevando il sedere dal suolo","Tieni 8 sec mantenendo le braccia tese","Se le gambe scendono non importa - lavora prima il sollevamento"], ytq:"L-sit hold beginner" },
+        { name:"L-sit tuck (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"90 sec", iso:true, tip:"Ginocchia al petto sollevate.", muscles:"Tricipiti · Core · Flessori anca", steps:["Seduto a terra, mani ai fianchi","Spingi e solleva il sedere portando le ginocchia al petto","Tieni 5 sec con le ginocchia sollevate e le braccia tese","Il core lavora per mantenere le ginocchia in alto"], ytq:"tuck L-sit hold" }
+      ]},
+    { id:2, name:"Fase 2: Forza & Controllo", unlockReq:"3x5" tuck L-sit pulito",
+      levels:[
+        { name:"L-sit tuck (3x10")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"90 sec", iso:true, tip:"10 sec con ginocchia al petto.", muscles:"Tricipiti · Core", steps:["Mani a terra ai fianchi, sedere sollevato","Ginocchia al petto sollevate e compatte","Tieni 10 sec respirando regolarmente","Le braccia devono restare completamente tese"], ytq:"tuck L-sit 10 seconds" },
+        { name:"L-sit 1 gamba tesa (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"90 sec", iso:true, tip:"Una gamba tesa, una piegata.", muscles:"Core · Flessori anca", steps:["Tuck L-sit con sedere sollevato","Estendi una gamba tenendola orizzontale","L altra gamba resta piegata al petto","Alterna le gambe tra le serie - leva maggiore"], ytq:"single leg L-sit progression" },
+        { name:"L-sit 1 gamba tesa (3x8")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"2 min", iso:true, tip:"Aumenta il tempo con una gamba tesa.", muscles:"Core · Flessori anca", steps:["Stessa posizione con una gamba tesa","8 secondi - la gamba tesa deve restare orizzontale","Non lasciar cadere la gamba sotto il livello dei fianchi","Respira regolarmente - e una gara di resistenza"] , ytq:"L-sit one leg extended" }
+      ]},
+    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x8" una gamba tesa",
+      levels:[
+        { name:"L-sit completo (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"2 min", iso:true, tip:"Entrambe le gambe tese a 90 gradi.", muscles:"Core · Flessori anca · Tricipiti", steps:["Sedere sollevato, entrambe le gambe tese davanti","Le gambe devono restare orizzontali a 90 gradi rispetto al busto","Braccia completamente tese, spalle attive","5 sec puliti - e gia un ottimo risultato"], ytq:"L-sit full tutorial" },
+        { name:"L-sit completo (3x10")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"2 min", iso:true, tip:"10 sec completi.", muscles:"Core · Flessori anca", steps:["Stessa forma dell L-sit completo","10 sec mantenendo le gambe orizzontali","Non cedere sulla posizione delle gambe","Spinge ancora piu forte con le mani - le spalle reggono tutto"], ytq:"L-sit 10 seconds hold" },
+        { name:"L-sit agli anelli (3x8")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"2 min", iso:true, tip:"Anelli = instabilita aggiuntiva.", muscles:"Core · Stabilizzatori · Tricipiti", steps:["Anelli bassi, afferra con braccia tese","Solleva il corpo e porta le gambe tese davanti","Gli anelli aggiungono instabilita - molto piu difficile","8 sec - il corpo deve restare fermo nonostante l oscillazione"], ytq:"L-sit on rings" }
+      ]}
+  ]},
+
+  planche: { name:"Planche", phases:[
+    { id:1, name:"Fase 1: Fondamenta", unlockReq:"Planche lean 10 sec",
+      levels:[
+        { name:"Planche lean (3x10")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"60 sec", iso:true, tip:"Spalle avanti rispetto alle mani.", muscles:"Spalle · Core · Tricipiti", steps:["Plank su braccia tese, mani in posizione normale","Sposta le spalle in avanti oltre i polsi inclinando il corpo","Il corpo resta rigido - solo le spalle si spostano avanti","Tieni 10 sec sentendo la pressione sulle spalle anteriori"], ytq:"planche lean tutorial" },
+        { name:"Planche lean (3x20")", sets:3, reps:20, sets_label:"3 x 20 sec", rest:"90 sec", iso:true, tip:"20 sec con spalle oltre i polsi.", muscles:"Spalle anteriori · Core", steps:["Stessa posizione del planche lean base","Spalle spostate avanti oltre i polsi","20 sec - la sfida e mantenere la posizione senza cedere","Spingi il suolo lontano - protrai le scapole attivamente"], ytq:"planche lean hold 20 seconds" },
+        { name:"Planche lean mani ruotate (3x15")", sets:3, reps:15, sets_label:"3 x 15 sec", rest:"90 sec", iso:true, tip:"Mani ruotate verso l esterno a 45 gradi.", muscles:"Spalle · Polsi", steps:["Planche lean con mani ruotate verso l esterno a 45 gradi","Aumenta lo stretch dei polsi e il lavoro delle spalle","Spalle oltre i polsi come sempre","15 sec - senti la differenza rispetto alle mani normali"], ytq:"planche lean wrists rotation" }
+      ]},
+    { id:2, name:"Fase 2: Forza & Controllo", unlockReq:"3x15" planche lean mani ruotate",
+      levels:[
+        { name:"Pseudo planche push-up (3x5)", sets:3, reps:5, sets_label:"3 x 5 rip", rest:"90 sec", iso:false, tip:"Mani verso i piedi, spalle oltre i polsi.", muscles:"Spalle anteriori · Tricipiti · Core", steps:["Mani a terra ruotate verso i piedi o verso l esterno","Spalle spostate avanti oltre i polsi - posizione planche lean","Scendi piegando i gomiti mantenendo le spalle avanti","Spingi su - i tricipiti e le spalle anteriori lavorano molto"], ytq:"pseudo planche push up tutorial" },
+        { name:"Pseudo planche push-up (3x8)", sets:3, reps:8, sets_label:"3 x 8 rip", rest:"2 min", iso:false, tip:"Volume aumentato.", muscles:"Spalle anteriori · Tricipiti", steps:["Stessa forma del pseudo planche push-up","8 ripetizioni mantenendo le spalle oltre i polsi per tutta la serie","Non perdere la posizione delle spalle nella stanchezza","La qualita della posizione conta piu del numero di rip"], ytq:"pseudo planche push up 8 reps" },
+        { name:"Tuck planche hold (3x3")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"2 min", iso:true, tip:"Sedere sollevato, ginocchia al petto.", muscles:"Spalle · Core", steps:["Mani a terra, braccia tese, mani ruotate verso i piedi","Spingi forte portando il corpo in avanti e sollevando il sedere","Ginocchia al petto - corpo orizzontale o quasi","3 sec - e gia un risultato enorme, la planche vera e propria parte da qui"], ytq:"tuck planche hold tutorial" }
+      ]},
+    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x3" tuck planche hold",
+      levels:[
+        { name:"Tuck planche hold (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"2 min", iso:true, tip:"5 sec di tuck planche controllato.", muscles:"Spalle · Core", steps:["Corpo orizzontale con ginocchia al petto","5 sec - la schiena deve restare piatta","Spingi il suolo con forza con entrambe le mani","Non cedere - la planche richiede forza enorme delle spalle"], ytq:"tuck planche 5 seconds" },
+        { name:"Tuck planche hold (3x8")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"3 min", iso:true, tip:"8 sec - obiettivo Skill Goals raggiunto.", muscles:"Spalle · Core (elite)", steps:["Tuck planche con corpo orizzontale","8 sec di controllo totale - spalle, core, tricipiti tutto attivo","Non oscillare - il corpo deve restare fermo","Hai raggiunto l obiettivo delle Skill Goals - continua verso advanced tuck"], ytq:"tuck planche hold advanced" },
+        { name:"Advanced tuck planche (3x3")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"3 min", iso:true, tip:"Gambe piu estese rispetto al tuck.", muscles:"Spalle (elite) · Core", steps:["Tuck planche ma estendi leggermente le ginocchia","Le gambe non sono completamente tese ma piu lunghe del tuck","Aumenta enormemente il momento di forza sulle spalle","3 sec - sei sulla strada verso la planche completa"], ytq:"advanced tuck planche tutorial" }
+      ]}
+  ]},
+
+  frontlever: { name:"Front Lever", phases:[
+    { id:1, name:"Fase 1: Fondamenta", unlockReq:"Tuck front lever 5 sec",
+      levels:[
+        { name:"Dead hang attivo (3x20")", sets:3, reps:20, sets_label:"3 x 20 sec", rest:"60 sec", iso:true, tip:"Scapole verso il basso e verso l interno.", muscles:"Dorsali · Scapole", steps:["Appeso alla sbarra in dead hang con braccia tese","Spingi le scapole verso il basso e verso l interno attivamente","Senti il corpo salire leggermente e il petto aprirsi","20 sec - e la base di tutto il front lever"], ytq:"active dead hang scapular depression" },
+        { name:"Tuck front lever (3x3")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"90 sec", iso:true, tip:"Ginocchia al petto, corpo orizzontale.", muscles:"Dorsali · Core · Spalle", steps:["Appeso alla sbarra, porta le ginocchia al petto","Spingi le spalle indietro e verso il basso","Il corpo deve diventare orizzontale rispetto al suolo","3 sec - senti i dorsali lavorare intensamente"], ytq:"tuck front lever tutorial" },
+        { name:"Tuck front lever (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"90 sec", iso:true, tip:"5 sec di tuck front lever.", muscles:"Dorsali · Core", steps:["Stessa posizione del tuck front lever","5 sec mantenendo il corpo orizzontale","Le ginocchia restano compatte al petto","Spingi forte le spalle indietro - e il segreto del front lever"], ytq:"tuck front lever 5 seconds" }
+      ]},
+    { id:2, name:"Fase 2: Forza & Controllo", unlockReq:"3x5" tuck front lever pulito",
+      levels:[
+        { name:"Tuck front lever (3x10")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"2 min", iso:true, tip:"10 sec di tuck front lever.", muscles:"Dorsali · Core", steps:["Tuck front lever con corpo orizzontale","10 sec - la resistenza muscolare aumenta progressivamente","Mantieni la spinta delle spalle per tutta la durata","Respira regolarmente - non trattenere il fiato"], ytq:"tuck front lever 10 seconds" },
+        { name:"Advanced tuck front lever (3x3")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"2 min", iso:true, tip:"Gambe piu estese rispetto al tuck.", muscles:"Dorsali · Core", steps:["Tuck front lever ma estendi leggermente le ginocchia","La schiena deve restare piatta - non inarcare","Aumenta il momento di forza sui dorsali","3 sec - e gia un grande passo avanti"], ytq:"advanced tuck front lever" },
+        { name:"Advanced tuck front lever (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"2 min", iso:true, tip:"5 sec con gambe piu estese.", muscles:"Dorsali · Core", steps:["Advanced tuck - ginocchia leggermente estese","Corpo orizzontale con schiena piatta","5 sec mantenendo la posizione delle gambe","Spingi ancora di piu le spalle indietro rispetto al tuck normale"], ytq:"advanced tuck front lever 5 seconds" }
+      ]},
+    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x5" advanced tuck front lever",
+      levels:[
+        { name:"Front lever 1 gamba tesa (3x3")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"3 min", iso:true, tip:"Una gamba tesa, una piegata.", muscles:"Dorsali · Core (elite)", steps:["Advanced tuck front lever con una gamba completamente tesa","L altra gamba resta piegata al petto","3 sec - leva molto aumentata rispetto all advanced tuck","La schiena deve restare assolutamente piatta"], ytq:"one leg front lever tutorial" },
+        { name:"Front lever 1 gamba tesa (3x5")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"3 min", iso:true, tip:"5 sec con una gamba tesa.", muscles:"Dorsali · Core", steps:["Una gamba tesa orizzontale, una piegata al petto","5 sec mantenendo il corpo orizzontale","Alterna la gamba tesa tra le serie","Sei vicino al front lever completo"], ytq:"one leg front lever 5 seconds" },
+        { name:"Front lever completo (3x3")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"3 min", iso:true, tip:"Entrambe le gambe tese - corpo orizzontale.", muscles:"Dorsali · Core (maestria)", steps:["Appeso alla sbarra con entrambe le gambe tese e corpo orizzontale","Spingi le spalle indietro e verso il basso con tutta la forza","Il corpo deve essere parallelo al suolo - testa inclusa","3 sec puliti - hai raggiunto uno degli obiettivi piu difficili del calisthenics"], ytq:"front lever full tutorial" }
+      ]}
   ]}
 };
 
@@ -979,7 +1042,7 @@ const DAYS = [
     warmup:[{icon:"🌅",text:"Mobilita generale 5 min",note:"Muscoli freddi alle 6 - non saltare"},{icon:"🔄",text:"Rotazioni spalle ampie",note:"10 avanti e 10 indietro, lente"},{icon:"🤸",text:"Aperture orizzontali",note:"15 rip - senti il petto aprirsi"},{icon:"🧘",text:"Planche lean 2x10 sec",note:"Attiva le spalle anteriori per i pike"},{icon:"💪",text:"5 push-up al muro lenti",note:"Solo attivazione - non fatica"}],
     cooldown:[{icon:"🧘",text:"Stretching petto",note:"30 sec"},{icon:"💆",text:"Allungamento tricipiti",note:"20 sec/braccio"},{icon:"🔄",text:"Rotazioni collo",note:"5 per lato"},{icon:"🤲",text:"Shake braccia",note:"10 sec"}],
     restNote:"⏱ Riposo: 90 sec normali · 2 min difficili",
-    exercises:[{chain:'pushup'},{chain:'dips'},{chain:'wallpushup_shoulder'},{chain:'plank'}] },
+    exercises:[{chain:'pushup'},{chain:'dips'},{chain:'wallpushup_shoulder'},{chain:'plank'},{chain:'planche'}] },
   { label:"MAR", name:"Giorno 2", title:"Gambe · Glutei", type:"legs", color:"var(--legs)",
     warmup:[{icon:"🦵",text:"Attivazione gambe 5 min",note:"Gambe grandi bruciano piu calorie - attivale bene"},{icon:"🚶",text:"Marcia ginocchia alte 30 sec",note:"Porta le ginocchia sopra i fianchi"},{icon:"🔄",text:"Rotazioni anche e caviglie",note:"10 cerchi per direzione - lubrica le articolazioni"},{icon:"🪑",text:"5 squat lenti 5 sec giu",note:"Senti ogni grado di discesa - prepara le ginocchia"},{icon:"🏃",text:"5 affondi lenti per gamba",note:"Ginocchio quasi a terra - senti lo stretch del flessore"}],
     cooldown:[{icon:"🧘",text:"Stretching quadricipiti",note:"30 sec/gamba"},{icon:"🦵",text:"Stretching femorali",note:"30 sec/gamba"},{icon:"",text:"Stretching hip flexor",note:"20 sec/lato"},{icon:"",text:"Allungamento polpacci",note:"20 sec/gamba"}],
@@ -994,12 +1057,12 @@ const DAYS = [
     warmup:[{icon:"🦅",text:"Attivazione schiena 5 min",note:"La schiena va riscaldata con cura - niente strappi"},{icon:"🔄",text:"Rotazioni spalle ampie indietro",note:"15 rip - apri le spalle e il torace"},{icon:"🤸",text:"Aperture torace con braccio esteso",note:"15 rip lente - senti i pettorali allungarsi"},{icon:"🏋️",text:"Air row lento 10 rip",note:"Immagina la sbarra - attiva le scapole"},{icon:"💪",text:"Dead hang 20 sec",note:"Scalda la presa e decomprime la colonna"}],
     cooldown:[{icon:"💪",text:"Stretching bicipiti",note:"20 sec/braccio"},{icon:"🧘",text:"Bambino laterale",note:"20 sec/lato"},{icon:"🔄",text:"Rotazioni spalle",note:"10 per direzione"},{icon:"🤲",text:"Intreccia dita, spingi",note:"20 sec"}],
     restNote:"⏱ Riposo: 2 min (schiena = più recupero)",
-    exercises:[{chain:'invertedrow'},{chain:'doorframerow'},{chain:'supermanvol'},{chain:'towelcurl'}] },
+    exercises:[{chain:'invertedrow'},{chain:'doorframerow'},{chain:'supermanvol'},{chain:'towelcurl'},{chain:'frontlever'}] },
   { label:"VEN", name:"Giorno 5", title:"Full Body · Cardio", type:"full", color:"var(--full)",
     warmup:[{icon:"⚡",text:"Riscaldamento completo 5 min",note:"Full body - tutto deve essere pronto"},{icon:"🚶",text:"Marcia ginocchia alte 30 sec",note:"Porta le ginocchia sopra i fianchi"},{icon:"🏃",text:"Jumping jacks camminati 20 rip",note:"Senza salto - rispetta il condominio"},{icon:"🪑",text:"10 squat lenti 3s giu 3s su",note:"Lubrica ginocchia e anche"},{icon:"💪",text:"5 flessioni lente attivazione",note:"Senti petto e spalle accendersi"}],
     cooldown:[{icon:"🧘",text:"Stretching completo 7 min",note:"Hai lavorato tutto"},{icon:"🦵",text:"Quadricipiti",note:"30 sec/gamba"},{icon:"🦵",text:"Femorali",note:"30 sec/gamba"},{icon:"",text:"Petto",note:"30 sec"},{icon:"🤸",text:"Dorsali",note:"20 sec"},{icon:"🌬️",text:"5 respiri profondi",note:"4-2-6"}],
     restNote:"⏱ Riposo: 90 sec · No riposo AMRAP",
-    exercises:[{chain:'burpee'},{chain:'fullsquat'},{chain:'inchworm'},{chain:'amrap'}] },
+    exercises:[{chain:'burpee'},{chain:'fullsquat'},{chain:'inchworm'},{chain:'amrap'},{chain:'lsit'}] },
   { label:"SAB", name:"Riposo attivo", type:"rest",
     restActivities:["🚶 Camminata 20-30 min","🧘 Yoga leggero 20 min","🚴 Bicicletta rilassata"," Nuoto leggero","😴 Sonno extra"],
     restTip:"Il riposo non è pigrizia: è quando i muscoli si riparano." },
