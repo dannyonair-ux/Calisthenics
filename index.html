@@ -385,7 +385,7 @@ async function loadStateFromFirestore(){
     } else {
       if(localState){ state=localState; await saveStateToFirestore(); }
     }
-    migrateStateToV2();
+    migrateStateToV3();
   patchHistoricalData();
   }catch(e){ console.error('Errore caricamento:',e); }
 }
@@ -410,49 +410,80 @@ auth.onAuthStateChanged(async(user)=>{
 });
 
 // ─── MIGRAZIONE V1 -> V2 ─────────────────────────────────
-function migrateStateToV2(){
-  if(state._migrated_v2) return;
-  const map = {
-    pushup:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:0,l:3},4:{p:1,l:0},5:{p:1,l:1},6:{p:1,l:2},7:{p:2,l:0}},
-    dips:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0},4:{p:1,l:1}},
-    wallpushup_shoulder:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0},4:{p:1,l:1}},
-    plank:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0},4:{p:1,l:1}},
-    squat:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0},4:{p:1,l:1}},
-    lunge:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0}},
-    glutebridge:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0}},
-    calfrise:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    wallsit:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    crunch:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0}},
-    reversecrunch:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    mountainclimber:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    hollowbody:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0},4:{p:1,l:1}},
-    superman:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    sideplank:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0}},
-    invertedrow:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0}},
-    doorframerow:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    supermanvol:{0:{p:0,l:0},1:{p:1,l:0}},
-    towelcurl:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    burpee:{0:{p:0,l:0},1:{p:0,l:1},2:{p:0,l:2},3:{p:1,l:0}},
-    fullsquat:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    inchworm:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}},
-    amrap:{0:{p:0,l:0},1:{p:0,l:1},2:{p:1,l:0}}
+function migrateStateToV3() {
+  const raw = localStorage.getItem('caliAM_v3');
+  if (!raw) return;
+  let s;
+  try { s = JSON.parse(raw); } catch(e) { return; }
+  if (s._migrated_v3) return;
+
+  // Mappa vecchio stato -> nuovo stato
+  // Livelli reali confermati da screenshot:
+  // pushup: p1l3 -> rimane p1l3 (Flessioni larghe + negative = stesso punto di partenza)
+  // dips: p1l3 -> p1l3 (Dips parallele elastico singolo 3x5 = lv0, quindi p1l3 => p1l3)
+  //   ma in nuovo schema p1 parte da lv0=elastico singolo 3x5, lv1=3x8, lv2=elastico medio 3x5, lv3=elastico medio 3x8
+  //   quindi p1l3 nel nuovo = elastico medio 3x8 = buono punto di partenza
+  // wallpushup_shoulder: p1l3 (Pike push-up piedi su sedia) -> p0l0 nel nuovo (stesso esercizio)
+  //   nuovo p0l0 = "Pike push-up piedi su sedia (3x8)" - rimane qui
+  // plank: p2l1 (Plank su anelli) -> p0l0 nel nuovo
+  // squat: p2l0 (Pistol libero) -> p0l0 nel nuovo (Pistol squat 3x5)
+  // lunge: p2l4 (Cossack squat) -> p0l0 nel nuovo (Cossack squat)
+  // glutebridge: p2l4 (Nordic curl) -> p0l0 nel nuovo
+  // calfrise: p2l1 (Calf 1g KB+disco) -> p1l0 nel nuovo (Calf 1g KB+disco 3x15)
+  // wallsit: p2l1 (Wall sit 90") -> p0l0 nel nuovo (Wall sit 90")
+  // crunch: p2l4 (Hanging knee raise) -> p0l0 nel nuovo
+  // reversecrunch: p2l1 (Toes to bar) -> p0l0 nel nuovo (Toes to bar 3x8)
+  // mountainclimber: p2l1 -> p0l0 nel nuovo
+  // hollowbody: p2l2 (Hollow rocks 3x25) -> p0l1 nel nuovo (Hollow rocks 3x25)
+  // superman: p2l1 (Superman hold 3x30) -> p0l0 nel nuovo
+  // sideplank: p2l1 (Side plank 3x45) -> p0l0 nel nuovo
+  // invertedrow: reale p1l0 (Ring row) -> p0l0 nel nuovo
+  // doorframerow: reale p0l2 (Doorframe row inclinato) -> p0l0 nel nuovo
+  // supermanvol: p2l1 -> p0l0 nel nuovo
+  // towelcurl: reale p0l3 (Chin-up negativo) -> p0l0 nel nuovo
+  // burpee: p2l1 -> p0l0 nel nuovo
+  // fullsquat: p2l1 -> p0l0 nel nuovo
+  // inchworm: p2l1 -> p0l0 nel nuovo
+  // amrap: p2l1 -> p0l0 nel nuovo
+  // lsit: p0l2 -> p0l2 nel nuovo (L-sit tuck 3x20" ~ terzo livello)
+  // planche: p0l2 -> p0l0 nel nuovo (Planche lean 3x20")
+  // frontlever: p0l0 -> p0l0 nel nuovo (Inverted hang)
+
+  const remap = {
+    pushup:              [1, 3],
+    dips:                [1, 3],
+    wallpushup_shoulder: [0, 0],
+    plank:               [0, 0],
+    squat:               [0, 0],
+    lunge:               [0, 0],
+    glutebridge:         [0, 0],
+    calfrise:            [1, 0],
+    wallsit:             [0, 0],
+    crunch:              [0, 0],
+    reversecrunch:       [0, 0],
+    mountainclimber:     [0, 0],
+    hollowbody:          [0, 1],
+    superman:            [0, 0],
+    sideplank:           [0, 0],
+    invertedrow:         [0, 0],
+    doorframerow:        [0, 0],
+    supermanvol:         [0, 0],
+    towelcurl:           [0, 0],
+    burpee:              [0, 0],
+    fullsquat:           [0, 0],
+    inchworm:            [0, 0],
+    amrap:               [0, 0],
+    lsit:                [0, 2],
+    planche:             [0, 0],
+    frontlever:          [0, 0]
   };
-  Object.keys(map).forEach(chain => {
-    const oldLv = state['lv_' + chain];
-    if(oldLv !== undefined && map[chain][oldLv]){
-      state['phase_' + chain] = map[chain][oldLv].p;
-      state['lv_' + chain] = map[chain][oldLv].l;
-    }
-    const pending = state['pending_lv_' + chain];
-    if(pending && map[chain][pending.lv]){
-      const nm = map[chain][pending.lv];
-      const cp = state['phase_' + chain] || 0;
-      if(nm.p > cp) state['pending_phase_up_' + chain] = {nextPhase: nm.p, date: pending.date};
-      else state['pending_lv_' + chain] = {lv: nm.l, date: pending.date};
-    }
-  });
-  state._migrated_v2 = true;
-  saveState();
+
+  const newState = { _migrated_v3: true };
+  for (const [chain, [phase, level]] of Object.entries(remap)) {
+    newState['phase_' + chain] = phase;
+    newState['lv_' + chain] = level;
+  }
+  localStorage.setItem('caliAM_v3', JSON.stringify(newState));
 }
 
 function patchHistoricalData(){
@@ -473,553 +504,573 @@ function patchHistoricalData(){
 
 // ─── 23 CATENE × 3 FASI ───────────────────────────────────
 const CHAINS = {
-  pushup: { name:"Flessioni", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x12 push-up classici perfetti",
-      levels:[
-        { name:"Flessioni ginocchia (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Mani larghezza spalle, gomiti a 45 gradi. Corpo rigido dalla testa alle ginocchia. Petto sfiora il suolo, risali completamente estendendo le braccia.", muscles:"Petto · Tricipiti", steps:["Mani larghezza spalle","Ginocchia a terra","Scendi lento 2 sec","Spingi su espirando"], ytq:"flessioni ginocchia tutorial" },
-        { name:"Flessioni ginocchia (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Petto · Tricipiti", steps:["Stessa forma","Discesa lenta 3 sec","Spingi esplosivo","Ultime rip al limite"], ytq:"flessioni ginocchia volume" },
-        { name:"Flessioni ginocchia + negative (3×8+3)", sets:3, reps:8, sets_label:"3 × 8+3 neg", rest:"90 sec", iso:false, tip:"8 normali + 3 negative da 5 sec.", muscles:"Petto · Tricipiti", steps:["8 flessioni normali","3 negative: scendi in 5 sec","Controllo totale","Aiutati con ginocchia"], ytq:"flessioni negative tutorial" },
-        { name:"Flessioni classiche (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"2 min", iso:false, tip:"Solo 5 perfette.", muscles:"Petto · Spalle · Tricipiti", steps:["Corpo rigido dalla testa ai piedi, mani larghezza spalle","Scendi in 2 sec con gomiti a 45 gradi, petto sfiora il suolo","Spingi esplosivo in salita estendendo completamente le braccia","Non cedere i fianchi ne in su ne in giu"], ytq:"push up forma perfetta" }
+  pushup: { name:"Flessioni", color:"push",
+    phases:[
+      { name:"Fase 1 – Flessioni base", rest:90, levels:[
+        { name:"Flessioni larghe (3×10)", sets:3, reps:10, rest:90 },
+        { name:"Flessioni larghe (3×12)", sets:3, reps:12, rest:90 },
+        { name:"Flessioni larghe + negative (3×6+3)", sets:3, reps:9, rest:90 },
+        { name:"Flessioni diamante (3×8)", sets:3, reps:8, rest:90 },
+        { name:"Flessioni diamante (3×12)", sets:3, reps:12, rest:90 }
       ]},
-    { id:2, name:"Fase 2: Forza & Leva", unlockReq:"3x8 diamante + 3x8 pike a terra",
-      levels:[
-        { name:"Flessioni classiche (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"8 rip pulite.", muscles:"Petto · Spalle · Tricipiti", steps:["Posizione plank su braccia tese, corpo rigido come un asse","Scendi piegando i gomiti a 45 gradi rispetto al corpo","Petto tocca il suolo - range completo, non fermarti a meta","Spingi esplosivo tornando alla posizione di partenza"], ytq:"push up 8 reps tutorial" },
-        { name:"Flessioni classiche (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"12 rip pulite.", muscles:"Petto · Spalle · Tricipiti", steps:["Stessa forma","Ritmo costante","Ultimo set al limite","Forma > velocità"], ytq:"push up 12 reps tutorial" },
-        { name:"Flessioni diamante (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Mani ravvicinate al centro, pollici quasi a toccarsi. Gomiti vicini al corpo nella discesa. Lavora principalmente i tricipiti e il petto interno.", muscles:"Tricipiti · Petto interno", steps:["Mani ravvicinate con pollici e indici che formano un triangolo","Corpo rigido, gomiti vicini al corpo durante tutta la discesa","Scendi fino a sfiorare il petto a terra, senti i tricipiti lavorare","Spingi su estendendo le braccia completamente"], ytq:"diamond push up tutorial" },
-        { name:"Archer push-up (3×5/lato)", sets:3, reps:5, sets_label:"3 × 5/lato", rest:"2 min", iso:false, tip:"Mani molto piu larghe delle spalle. Scendi verso un lato piegando quel gomito, il braccio opposto resta quasi teso. Precursore dell archer push-up.", muscles:"Petto · Spalle (unilaterale)", steps:["Mani molto piu larghe delle spalle - quasi il doppio","Scendi spostando il peso su un lato piegando quel gomito","Il braccio opposto resta quasi teso durante la discesa","Alterna i lati - precursore diretto dell archer push-up"], ytq:"archer push up tutorial" }
+      { name:"Fase 2 – Flessioni avanzate", rest:120, levels:[
+        { name:"Typewriter push-up (3×5/lato)", sets:3, reps:10, rest:120 },
+        { name:"Typewriter push-up (3×8/lato)", sets:3, reps:16, rest:120 },
+        { name:"Archer push-up assistito (3×5/lato)", sets:3, reps:10, rest:120 },
+        { name:"Archer push-up assistito (3×8/lato)", sets:3, reps:16, rest:120 },
+        { name:"Archer push-up (3×5/lato)", sets:3, reps:10, rest:120 }
       ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x8 archer + 3x8 pseudo planche",
-      levels:[
-        { name:"Pike push-up a terra (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Corpo a V con sedere alto. Mani avanzate. Scendi portando la testa AVANTI alle mani verso il suolo, non tra le mani. Gomiti a 45 gradi. Senti le spalle.", muscles:"Spalle · Tricipiti", steps:["Corpo a V stretta","Testa tocca terra avanti","Gomiti a 45°","Spingi forte"], ytq:"pike push up full ROM" },
-        { name:"Pseudo planche push-up (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Mani alla vita, spalle oltre polsi.", muscles:"Petto alto · Spalle", steps:["Mani all'ombelico, dita fuori","Spalle oltre i polsi","Scendi inclinato","Spingi su"], ytq:"pseudo planche push up" },
-        { name:"Handstand push-up muro (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Pancia al muro.", muscles:"Spalle · Tricipiti · Core", steps:["Calciata al muro con la pancia verso il muro - schiena leggermente arcuata","Mani a 15-20cm dal muro larghezza spalle - test il triangolo testa-mani","Scendi portando la testa verso il suolo lentamente e con controllo","Spingi su dalle spalle con forza - la testa sfiora appena il suolo"], ytq:"chest to wall HSPU" },
-        { name:"Push-up un braccio assistito (3×5/lato)", sets:3, reps:5, sets_label:"3 × 5/lato", rest:"2 min", iso:false, tip:"Altra mano su KB.", muscles:"Petto · Spalle (max)", steps:["Una mano a terra, una mano sulla KB - altezza diversa","Scendi controllato mantenendo il corpo rigido senza ruotare","I fianchi restano fermi - non cedere alla rotazione","Spingi su dalla posizione asimmetrica - spalle asimmetriche"], ytq:"one arm push up progression" }
+      { name:"Fase 3 – Push-up esplosivi", rest:120, levels:[
+        { name:"Archer push-up (3×8/lato)", sets:3, reps:16, rest:120 },
+        { name:"Pseudo planche push-up (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Pseudo planche push-up (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Push-up un braccio assistito (3×5/lato)", sets:3, reps:10, rest:120 },
+        { name:"Handstand push-up muro (3×3)", sets:3, reps:3, rest:180 }
       ]}
-  ]},
-  dips: { name:"Dips", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x12 dips gambe tese",
-      levels:[
-        { name:"Dips sedia gambe piegate (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"90 sec", iso:false, tip:"Schiena vicina alla sedia.", muscles:"Tricipiti · Petto basso", steps:["Sdraiato sotto il tavolo con mani al bordo larghezza spalle e piedi piegati","Corpo rigido, spingi le scapole verso il basso prima di tirare","Tira il petto verso il bordo del tavolo tenendo i gomiti vicini al corpo","Scendi lentamente in 3 sec - non cedere di colpo"], ytq:"bench dips bent legs" },
-        { name:"Dips sedia gambe piegate (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Tricipiti · Petto basso", steps:["Stessa forma","Discesa controllata","Ultime 3 al limite","No rimbalzo"], ytq:"bench dips volume" },
-        { name:"Dips sedia gambe tese (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Gambe tese = più peso.", muscles:"Tricipiti · Spalle", steps:["Gambe completamente tese - aumenta il peso da sollevare significativamente","Corpo perfettamente rigido dalla testa ai talloni, scapole attive","Tira portando il petto al bordo del tavolo, gomiti vicini","Scendi in 3 sec controllando ogni centimetro della discesa"], ytq:"bench dips straight legs" },
-        { name:"Dips elevati (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi su seconda sedia.", muscles:"Tricipiti · Petto basso", steps:["Mani sedia A, piedi sedia B","Corpo parallelo","Scendi controllato","Spingi su"], ytq:"elevated dips two chairs" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Leva", unlockReq:"3x12 dips elevati perfetti",
-      levels:[
-        { name:"Dips elevati (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"2 min", iso:false, tip:"12 rip tutto peso.", muscles:"Tricipiti · Petto basso", steps:["Stessa forma","Controllo totale","Spingi esplosivo","No rimbalzo"], ytq:"elevated dips advanced" },
-        { name:"Dips elevati pausa 2 sec (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Pausa in basso.", muscles:"Tricipiti (alta intensità)", steps:["Piedi su seconda sedia - corpo quasi parallelo al suolo","Scendi a 90 gradi e tieni la posizione bassa per 2 sec","Non rimbalzare dalla posizione bassa - elimina l elasticita","Spingi forte estendendo completamente le braccia"], ytq:"dips pause bottom" },
-        { name:"Dips elevati negativi (3×5+5)", sets:3, reps:5, sets_label:"3 × 5+5 neg", rest:"2 min", iso:false, tip:"5 normali + 5 negative 5 sec.", muscles:"Tricipiti (eccentrico)", steps:["5 dips normali","5 negative: scendi 5 sec","Risali con aiuto","Controllo totale"], ytq:"dips negative progression" },
-        { name:"Dips su parallele assistiti (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"2 min", iso:false, tip:"Elastico sotto i piedi.", muscles:"Tricipiti · Petto", steps:["Metti la banda elastica sulla barra o sui supporti e infila un ginocchio","Posizionati tra le parallele con le mani che afferrano i supporti","Scendi piegando i gomiti fino a 90 gradi, busto leggermente inclinato","Spingi su estendendo le braccia completamente - la banda ti aiuta nella parte difficile"], ytq:"band assisted dips" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x8 dips parallele puliti",
-      levels:[
-        { name:"Dips parallele (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Corpo verticale, gomiti stretti.", muscles:"Tricipiti · Petto", steps:["Sali alle parallele con le braccia tese e corpo sospeso","Scendi piegando i gomiti fino a 90 gradi - busto leggermente inclinato in avanti","Tieni i gomiti vicini al corpo - non allargare troppo","Spingi su estendendo completamente le braccia - contrai i tricipiti in cima"], ytq:"parallel bar dips" },
-        { name:"Dips anelli (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Stabilità estrema.", muscles:"Petto · Tricipiti · Core", steps:["Sali agli anelli con le braccia tese, anelli ruotati con pollici verso l esterno","Scendi piegando i gomiti - gli anelli possono aprirsi leggermente","Risali spingendo e stringendo gli anelli verso il corpo in cima","Controlla l oscillazione mantenendo il core attivo e il corpo fermo"], ytq:"ring dips tutorial" },
-        { name:"Dips anelli con pausa (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"3 min", iso:false, tip:"Pausa 2 sec in basso.", muscles:"Petto · Tricipiti (élite)", steps:["Sali agli anelli con braccia tese, anelli paralleli o ruotati verso esterno","Scendi aprendo leggermente gli anelli fino a 90 gradi","Pausa 2 sec in basso - senti la massima tensione","Risali controllato stringendo gli anelli verso il corpo"], ytq:"ring dips pause" }
-      ]}
-  ]}, 
-    wallpushup_shoulder: { name:"Spalle & Pike", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 pike su rialzo ROM completo",
-      levels:[
-        { name:"Diamond push-up muro (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Mani a diamante al muro.", muscles:"Tricipiti · Spalle", steps:["Tieni lo stipite con entrambe le mani, piedi vicini alla porta","Inclinati indietro a 45-60 gradi mantenendo il corpo rigido","Tira il petto verso lo stipite portando i gomiti indietro e in basso","Stendi le braccia lentamente tornando alla posizione inclinata"], ytq:"diamond wall push up" },
-        { name:"Diamond push-up muro (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Tricipiti · Spalle", steps:["Stessa forma","Piedi più vicini","Gomiti stretti","Controlla"], ytq:"wall diamond push up volume" },
-        { name:"Pike push-up ginocchia (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"90 sec", iso:false, tip:"Ginocchia a terra, V rovesciata.", muscles:"Spalle · Tricipiti", steps:["Ginocchia a terra, mani avanzate rispetto alle ginocchia","Solleva il sedere formando una V - piu avanzano le mani piu alta e la V","Scendi portando la testa verso il suolo tra le mani, gomiti a 45 gradi","Spingi dalle spalle verso l alto riportando il sedere in cima alla V"], ytq:"pike push up knees" },
-        { name:"Pike push-up su rialzo (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi su rialzo BASSO. Testa AVANTI alle mani.", muscles:"Spalle · Tricipiti", steps:["Piedi su scalino basso","Mani avanti alle spalle","Scendi con testa avanti","Gomiti a 45°"], ytq:"pike push up elevated beginner" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Leva", unlockReq:"3x8 pike a terra ROM completo",
-      levels:[
-        { name:"Pike push-up a terra (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi a terra, triangolo testa-mani.", muscles:"Spalle · Tricipiti", steps:["Corpo a V stretta","Testa tocca terra avanti","Gomiti a 45°","Spingi forte"], ytq:"pike push up full ROM" },
-        { name:"Pike push-up piedi su sedia (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi su sedia, quasi verticale.", muscles:"Spalle (alta intensità)", steps:["Piedi su una sedia, mani a terra avanzate - angolo quasi verticale","Corpo a V stretta con sedere alto - piu e verticale piu lavorano le spalle","Scendi portando la testa verso il suolo tra le mani","Spingi forte dalle spalle tornando alla V - senti il deltoide anteriore"], ytq:"pike push up feet on chair" },
-        { name:"Pike push-up elevati pausa (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"Pausa 2 sec in basso.", muscles:"Spalle (max)", steps:["Piedi su sedia, mani a terra avanzate - angolo quasi verticale","Scendi fino a toccare il suolo con la testa - pausa 2 sec","Spingi esplosivo dalle spalle tornando alla V alta","Controllo totale - non perdere la V nella risalita"], ytq:"pike push up pause" },
-        { name:"Pike push-up negativi (3×5+3)", sets:3, reps:5, sets_label:"3 × 5+3 neg", rest:"2 min", iso:false, tip:"5 normali + 3 negative 5 sec.", muscles:"Spalle (eccentrico)", steps:["5 pike push-up normali con range completo","3 negativi: sali con le mani se necessario, scendi in 5 sec","La fase eccentrica lenta costruisce la forza delle spalle","Controllo totale - qualita assoluta su ogni negativa"], ytq:"pike push up negatives" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x6 pike elevati con pausa",
-      levels:[
-        { name:"Pike push-up a terra (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"V stretta, testa tocca terra avanti alle mani.", muscles:"Spalle · Tricipiti", steps:["Corpo a V stretta con sedere alto, mani avanzate rispetto ai piedi","Scendi portando la testa a toccare il suolo AVANTI alle mani","Gomiti a 45 gradi, senti le spalle lavorare nella discesa","Spingi forte dalle spalle riportando il sedere in alto"], ytq:"pike push up full ROM" },
-        { name:"Pike push-up piedi su sedia (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi su sedia, quasi verticale.", muscles:"Spalle (alta intensità)", steps:["Piedi su una sedia, mani a terra avanzate - angolo quasi verticale","Corpo a V stretta con sedere alto - piu e verticale piu lavorano le spalle","Scendi portando la testa verso il suolo tra le mani","Spingi forte dalle spalle tornando alla V - senti il deltoide anteriore"], ytq:"pike push up feet on chair" },
-        { name:"Handstand push-up muro (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Pancia al muro.", muscles:"Spalle · Tricipiti · Core", steps:["Calciata al muro con la pancia verso il muro - schiena leggermente arcuata","Mani a 15-20cm dal muro larghezza spalle - test il triangolo testa-mani","Scendi portando la testa verso il suolo lentamente e con controllo","Spingi su dalle spalle con forza - la testa sfiora appena il suolo"], ytq:"chest to wall HSPU" },
-        { name:"HSPU muro (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"3 min", iso:false, tip:"Volume aumentato.", muscles:"Spalle · Tricipiti", steps:["Stessa forma dell HSPU base - pancia al muro, mani a 15cm","8 ripetizioni pulite mantenendo la qualita su ogni singola rep","Controllo totale in discesa - non accelerare nell ultima rep","Non cedere - se crolla la forma fermati e riposati prima di continuare"], ytq:"HSPU wall volume" },
-        { name:"HSPU libero al muro (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Schiena verso il muro invece della pancia - posizione molto piu difficile. Richiede maggiore forza delle spalle e controllo del core. Il muro e solo per sicurezza.", muscles:"Spalle · Core (élite)", steps:["Calciata con la schiena verso il muro - posizione piu difficile e corretta","Corpo quasi verticale con minimo inarcamento della schiena","Scendi portando la testa verso il suolo lentamente","Spingi su con forza - il muro e solo per sicurezza non per appoggiarsi"], ytq:"back to wall HSPU" }
-      ]}
-  ]},
-  plank: { name:"Plank & Core Spinta", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x30\" plank braccia tese",
-      levels:[
-        { name:"Plank avambracci (3×35\")", sets:3, reps:35, sets_label:"3 × 35 sec", rest:"60 sec", iso:true, tip:"Respira regolarmente.", muscles:"Core · Spalle", steps:["Avambracci a terra con i gomiti esattamente sotto le spalle","Corpo in linea retta dalla testa ai talloni - no cedimento dei fianchi","Spingi attivamente le scapole verso il soffitto, contrai addominali e glutei","Respira regolarmente espandendo le costole lateralmente"], ytq:"plank avambracci tutorial" },
-        { name:"Plank avambracci (3×50\")", sets:3, reps:50, sets_label:"3 × 50 sec", rest:"60 sec", iso:true, tip:"50 sec. Se tremi ma tieni, conta.", muscles:"Core · Spalle", steps:["Pancia a terra, stessa forma del superman base con braccia e gambe sollevate","Occhi a terra - il collo e in posizione neutra, non alzare la testa","Contrai attivamente i glutei e la schiena bassa per tutta la serie","Non cedere fino all ultima ripetizione - la schiena si fortifica con il volume"], ytq:"plank 50 secondi" },
-        { name:"Plank braccia tese (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"60 sec", iso:true, tip:"Braccia tese = più spalle.", muscles:"Core · Spalle · Petto", steps:["Mani a terra con le braccia tese, polsi sotto le spalle","Corpo in linea retta, no cedimento dei fianchi ne alzarli troppo","Spingi il suolo lontano con le mani - protrai le scapole attivamente","Contrai addominali e glutei - respira senza perdere la tensione"], ytq:"high plank tutorial" },
-        { name:"Plank braccio alternato (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Solleva un braccio 2 sec.", muscles:"Core · Obliqui", steps:["Parti in plank su braccia tese con piedi leggermente piu larghi per stabilita","Solleva un braccio tenendolo teso per 2 secondi - corpo completamente fermo","I fianchi non devono ruotare ne cedere - e la sfida principale","Abbassa lentamente e alterna - qualita sopra la velocita"], ytq:"plank arm raise" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Stabilità", unlockReq:"3x12 plank tocco spalle pulito",
-      levels:[
-        { name:"Plank tocco spalle (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"Tocca spalla opposta.", muscles:"Core anti-rotazione", steps:["Parti in plank su braccia tese con piedi leggermente allargati","Porta la mano destra a toccare la spalla sinistra lentamente","I fianchi restano fermi - non ondeggiare, e il punto piu difficile","Ritorna e alterna - piu lentamente fai meno oscillano i fianchi"], ytq:"plank shoulder tap" },
-        { name:"Plank con renegade row (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"90 sec", iso:false, tip:"Remata in plank con KB.", muscles:"Core · Dorsali", steps:["Side plank con mano su KB - corpo in linea laterale","Tira la KB verso il fianco con il braccio libero","I fianchi non devono scendere ne ruotare - massima stabilita","Abbassa lentamente la KB e ripeti - alterna i lati"], ytq:"renegade row plank" },
-        { name:"Plank laterale con rotazione (3×10/lato)", sets:3, reps:10, sets_label:"3 × 10/lato", rest:"90 sec", iso:false, tip:"Braccio ruota sotto.", muscles:"Obliqui · Mobilità", steps:["Plank laterale","Braccio ruota sotto","Torna su","Fianchi alti"], ytq:"side plank rotation" },
-        { name:"Plank walk-out (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"90 sec", iso:false, tip:"Dalla posizione in piedi, piega il busto e cammina con le mani in avanti fino al plank. Fai una flessione se puoi. Rialzati camminando con le mani verso i piedi. Ripeti.", muscles:"Core · Spalle", steps:["In piedi, piega il busto e appoggia le mani a terra","Cammina con le mani in avanti fino al plank completo","Tieni il plank 2 sec attivando core e spalle","Cammina con le mani verso i piedi e torna in piedi"], ytq:"plank walk out tutorial" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x8 walk-out + 3x10/lato rotazione",
-      levels:[
-        { name:"Plank su anelli (3×20\")", sets:3, reps:20, sets_label:"3 × 20 sec", rest:"90 sec", iso:true, tip:"Gli anelli si muovono liberamente attivando piu muscoli stabilizzatori rispetto al tavolo. Mantieni le mani parallele o con pollici verso l alto. Scapole attive.", muscles:"Core · Stabilizzatori", steps:["Afferra gli anelli e inclina il corpo verso il suolo - piu orizzontale uguale piu difficile","Corpo completamente rigido dalla testa ai talloni, scapole attive","Tira portando il petto agli anelli, gomiti vicini al corpo","Scendi lento in 3 sec controllando l oscillazione degli anelli"], ytq:"ring plank tutorial" },
-        { name:"Plank RKC (3×15\")", sets:3, reps:15, sets_label:"3 × 15 sec", rest:"90 sec", iso:true, tip:"Corpo completamente rigido appeso alla sbarra. Spingi le scapole verso il basso e verso l interno prima di tirare. Porta il petto alla sbarra, non solo il mento.", muscles:"Core completo", steps:["Plank avambracci","Stringi pugni","Contrai glutei al max","Tira gomiti verso piedi"], ytq:"RKC plank tutorial" },
-        { name:"Planche lean hold (3×20\")", sets:3, reps:20, sets_label:"3 × 20 sec", rest:"2 min", iso:true, tip:"In plank su braccia tese, sposta le spalle in avanti oltre i polsi inclinando tutto il corpo rigido. Piu vai avanti piu e difficile. Allena la forza per la planche.", muscles:"Spalle · Core (élite)", steps:["Plank su braccia tese come posizione di partenza","Ruota le mani verso l esterno fino a 45 gradi","Sposta le spalle in avanti oltre i polsi","Tieni la posizione - e il planche lean con mani ruotate"], ytq:"planche lean hold" }
-      ]}
-  ]},
-    squat: { name:"Squat", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 squat pausa 3 sec",
-      levels:[
-        { name:"Squat (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"Piedi larghezza spalle, punte leggermente aperte. Scendi come se ti sedessi su una sedia invisibile. Ginocchia seguono le punte dei piedi. Talloni sempre a terra.", muscles:"Quadricipiti · Glutei", steps:["Piedi larghezza spalle","Schiena dritta","Scendi 3 sec","Risali espirando"], ytq:"squat corpo libero tutorial" },
-        { name:"Squat (4×15)", sets:4, reps:15, sets_label:"4 × 15 rip", rest:"90 sec", iso:false, tip:"Volume alto.", muscles:"Quadricipiti · Glutei", steps:["Stessa forma","4 serie","Discesa lenta","Forma impeccabile"], ytq:"squat volume 4x15" },
-        { name:"Squat pausa 3 sec (4×10)", sets:4, reps:10, sets_label:"4 × 10 rip", rest:"2 min", iso:false, tip:"Scendi in squat completo e tieni la posizione bassa per 3 secondi. Elimina il rimbalzo e aumenta enormemente il lavoro muscolare. Risali spingendo sui talloni.", muscles:"Quadricipiti · Glutei", steps:["Scendi in squat","Tieni 3 sec","No rimbalzo","Risali lento"], ytq:"squat pausa isometrico" },
-        { name:"Squat bulgaro (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Piede su sedia.", muscles:"Quadricipiti · Glutei", steps:["Piede posteriore su sedia, piede anteriore avanzato di un grande passo","Scendi con il ginocchio posteriore verso il suolo controllato","Mantieni il busto eretto, ginocchio anteriore sopra il tallone","Spingi dal tallone anteriore per risalire - gluteo e quadricipite"], ytq:"bulgarian split squat" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Unilaterale", unlockReq:"3x8 pistol assistito pulito",
-      levels:[
-        { name:"Pistol assistito porta (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Tieni stipite.", muscles:"Quadricipiti · Equilibrio", steps:["Tieni lo stipite o un supporto, porta una gamba tesa in avanti","Scendi lentamente su una sola gamba mantenendo la schiena dritta","Questa e la progressione verso il pistol squat senza supporto","Spingi sul tallone per risalire - concentra tutta la forza sul quadricipite"], ytq:"assisted pistol squat" },
-        { name:"Pistol libero (3×5/gamba)", sets:3, reps:5, sets_label:"3 × 5/gamba", rest:"2 min", iso:false, tip:"Senza aiuto.", muscles:"Quadricipiti · Glutei", steps:["Braccia tese avanti","Scendi controllato","Gluteo al polpaccio","Risali esplosivo"], ytq:"pistol squat progression" },
-        { name:"Goblet squat KB 12kg (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"KB al petto.", muscles:"Gambe · Core", steps:["Tieni la KB con entrambe le mani al petto - goblet position","Scendi in squat profondo mantenendo il busto eretto","I gomiti restano dentro - non allargarsi nella discesa","Risali spingendo i talloni a terra - estendi completamente le anche"], ytq:"goblet squat kettlebell" },
-        { name:"Cossack squat (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"90 sec", iso:false, tip:"Passo laterale ampio, scendi sul lato piegando quel ginocchio. La gamba opposta resta tesa. Piede del lato piegato completamente a terra. Spingi per tornare al centro.", muscles:"Adduttori · Quadricipiti", steps:["Piedi molto piu larghi delle spalle, punte leggermente aperte","Scendi lateralmente verso un piede piegando quel ginocchio","La gamba opposta resta completamente tesa","Spingi per tornare al centro e alterna il lato"], ytq:"cossack squat tutorial" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x8 pistol libero pulito",
-      levels:[
-        { name:"Pistol libero (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Volume aumentato.", muscles:"Quadricipiti · Glutei", steps:["Stessa forma","8 per gamba","Controllo","No oscillazione"], ytq:"pistol squat volume" },
-        { name:"Pistol + KB press (3×6/gamba)", sets:3, reps:6, sets_label:"3 × 6/gamba", rest:"2 min", iso:false, tip:"KB 12kg in mano.", muscles:"Gambe · Spalle · Core", steps:["KB in mano","Pistol squat","Press in salita","Alterna"], ytq:"pistol squat overhead press" },
-        { name:"Shrimp squat (3×5/gamba)", sets:3, reps:5, sets_label:"3 × 5/gamba", rest:"2 min", iso:false, tip:"Piede post. in mano.", muscles:"Quadricipiti · Glutei", steps:["Tieni piede post.","Scendi su anteriore","Ginocchio a terra","Risali"], ytq:"shrimp squat tutorial" },
-        { name:"Goblet squat KB+disco (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"2 min", iso:false, tip:"17kg totali.", muscles:"Gambe · Core · Schiena", steps:["KB+disco al petto","Squat profondo","Gomiti dentro","Risali esplosivo"], ytq:"heavy goblet squat" }
-      ]}
-  ]},
-  lunge: { name:"Affondi", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 affondi camminati",
-      levels:[
-        { name:"Affondi sul posto (3×10/gamba)", sets:3, reps:10, sets_label:"3 × 10/gamba", rest:"90 sec", iso:false, tip:"Affondo con il ginocchio posteriore che scende a 2cm dal suolo senza toccarlo. Massima escursione articolare. Busto eretto, core attivo. Spingi dal tallone anteriore.", muscles:"Quadricipiti · Glutei", steps:["Piedi uniti","Passo lungo","Ginocchio post. giù","Risali alterna"], ytq:"affondi tutorial" },
-        { name:"Affondi camminati (3×12/gamba)", sets:3, reps:12, sets_label:"3 × 12/gamba", rest:"90 sec", iso:false, tip:"Avanza continuo.", muscles:"Quadricipiti · Glutei", steps:["Affondo avanti","Porta piede post. avanti","Continua alternando","Busto dritto"], ytq:"walking lunges tutorial" },
-        { name:"Affondi laterali (3×10/lato)", sets:3, reps:10, sets_label:"3 × 10/lato", rest:"90 sec", iso:false, tip:"Lavora adduttori.", muscles:"Adduttori · Gluteo medio", steps:["Passo largo di lato","Scendi piegando","Altra gamba tesa","Risali"], ytq:"lateral lunges tutorial" },
-        { name:"Affondo bulgaro pausa (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Pausa 2 sec in basso.", muscles:"Quadricipiti · Glutei", steps:["Piede post. su sedia","Scendi in affondo","Pausa 2 sec","Risali lento"], ytq:"bulgarian lunge pause" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Dinamica", unlockReq:"3x8 bulgaro pausa pulito",
-      levels:[
-        { name:"Affondo bulgaro KB 12kg (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"KB in mano opposta.", muscles:"Quadricipiti · Glutei", steps:["KB mano opposta","Piede post. su sedia","Scendi controllato","Risali"], ytq:"bulgarian split squat kettlebell" },
-        { name:"Affondo saltato alternato (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Salto morbido, atterra piano.", muscles:"Quadricipiti · Potenza", steps:["Affondo basso","Salta e cambia gamba","Atterra morbido","Silenzioso"], ytq:"jumping lunges soft landing" },
-        { name:"Affondo inverso deficit (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Piede avanti su rialzo.", muscles:"Glutei · Femorali", steps:["Piede avanti su scalino","Passo indietro lungo","Scendi profondo","Risali"], ytq:"deficit reverse lunge" },
-        { name:"Cossack squat (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"2 min", iso:false, tip:"Mobilita laterale avanzata. Piede opposto ruotato o a terra.", muscles:"Adduttori · Quadricipiti · Mobilita", steps:["Piedi molto larghi punte aperte","Scendi lateralmente piegando una sola gamba","Altra gamba tesa a terra","Risali spingendo dal tallone"], ytq:"cossack squat tutorial" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x8 bulgaro KB pulito",
-      levels:[
-        { name:"Affondo bulgaro KB+disco (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"17kg totali.", muscles:"Quadricipiti · Glutei", steps:["KB+disco","Piede post. su sedia","Scendi profondo","Risali"], ytq:"heavy bulgarian split squat" },
-        { name:"Pistol squat libero (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Massimo volume.", muscles:"Quadricipiti · Equilibrio", steps:["Braccia avanti","Scendi controllato","Gluteo al polpaccio","Risali"], ytq:"pistol squat high volume" },
-        { name:"Shrimp squat (3×6/gamba)", sets:3, reps:6, sets_label:"3 × 6/gamba", rest:"2 min", iso:false, tip:"Piede post. in mano.", muscles:"Quadricipiti · Glutei", steps:["Tieni piede post.","Scendi controllato","Ginocchio a terra","Risali"], ytq:"shrimp squat progression" }
-      ]}
-  ]},
-  glutebridge: { name:"Glutei & Femorali", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 glute bridge 1 gamba",
-      levels:[
-        { name:"Glute bridge pausa (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"60 sec", iso:false, tip:"2 sec in cima.", muscles:"Glutei · Femorali", steps:["Schiena a terra, piedi piatti a larghezza fianchi, ginocchia piegate a 90 gradi","Spingi i talloni a terra e solleva i fianchi verso il soffitto","Contrai i glutei in cima tenendo 2 sec - non inarcare la schiena bassa","Scendi lentamente vertebra per vertebra fino al suolo"], ytq:"glute bridge pause" },
-        { name:"Glute bridge 1 gamba (3×10/lato)", sets:3, reps:10, sets_label:"3 × 10/lato", rest:"90 sec", iso:false, tip:"Una gamba sola.", muscles:"Glutei (unilaterale)", steps:["Una gamba tesa su","Spingi con l'altra","Tieni 2 sec","Bacino livellato"], ytq:"single leg glute bridge" },
-        { name:"Hip thrust muro (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"Piedi al muro.", muscles:"Glutei · Femorali", steps:["Piedi al muro 90°","Spingi fianchi su","Contrai glutei","Scendi lento"], ytq:"hip thrust wall tutorial" },
-        { name:"SL Glute Bridge Hold (3×40\")", sets:3, reps:40, sets_label:"3 × 40 sec", rest:"90 sec", iso:true, tip:"Gambe tese, talloni a terra.", muscles:"Femorali · Glutei", steps:["Gambe tese","Solleva bacino","Strizza glutei","Tieni 40 sec"], ytq:"straight leg glute bridge hold" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Catena Post.", unlockReq:"3x40\" SL Glute Bridge Hold",
-      levels:[
-        { name:"SL RDL KB 12kg (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Femorali in allungamento.", muscles:"Femorali · Glutei", steps:["KB mano opposta","Inclina busto","Gamba libera indietro","Schiena piatta"], ytq:"single leg RDL kettlebell" },
-        { name:"Nordic curl negativo (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Scendi in 5 sec.", muscles:"Femorali (eccentrico)", steps:["Ginocchia a terra, piedi bloccati","Scendi 5 sec","Mani ammortizzano","Risali con mani"], ytq:"nordic curl negative" },
-        { name:"SL Glute Bridge Hold (3×60\")", sets:3, reps:60, sets_label:"3 × 60 sec", rest:"90 sec", iso:true, tip:"60 sec di fuoco.", muscles:"Femorali · Glutei", steps:["Gambe tese","Bacino alto","Strizza forte","Respira"], ytq:"straight leg bridge hold 60s" },
-        { name:"Nordic curl (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Completo: scendi e risali.", muscles:"Femorali (élite)", steps:["Piedi bloccati","Scendi controllato","Minimo aiuto mani","Risali con femorali"], ytq:"nordic curl full" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x5 nordic negativi + 3x8 SL RDL",
-      levels:[
-        { name:"Nordic curl (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"3 min", iso:false, tip:"Volume alto.", muscles:"Femorali (élite)", steps:["Stessa forma","8 rip pulite","Controllo totale","No aiuto mani"], ytq:"nordic curl volume" },
-        { name:"SL RDL KB+disco (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"17kg.", muscles:"Femorali · Glutei", steps:["KB+disco","Inclina busto","Gamba indietro","Schiena piatta"], ytq:"heavy single leg RDL" },
-        { name:"Hip thrust con KB (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"KB sul bacino.", muscles:"Glutei (carico)", steps:["KB sul bacino","Spingi fianchi su","Contrai in cima","Scendi lento"], ytq:"kettlebell hip thrust" }
-      ]}
-  ]},
-    calfrise: { name:"Polpacci", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x20 calf raise gradino",
-      levels:[
-        { name:"Calf raise terra (3×20)", sets:3, reps:20, sets_label:"3 × 20 rip", rest:"60 sec", iso:false, tip:"Sali 2 sec, tieni 1 sec.", muscles:"Gastrocnemio · Soleo", steps:["In piedi con i piedi paralleli larghezza fianchi, peso distribuito sulle punte","Solleva i talloni salendo sulle punte dei piedi il piu in alto possibile","Tieni 1-2 sec in cima sentendo il polpaccio completamente contratto","Scendi lentamente in 3 sec - la fase eccentrica e la piu importante"], ytq:"calf raise tutorial" },
-        { name:"Calf raise gradino (3×20)", sets:3, reps:20, sets_label:"3 × 20 rip", rest:"60 sec", iso:false, tip:"Range completo.", muscles:"Gastrocnemio · Soleo", steps:["Piede su gradino","Scendi sotto livello","Sali sulle punte","Tieniti al muro"], ytq:"calf raise step full ROM" },
-        { name:"Calf raise 1 gamba (3×15/gamba)", sets:3, reps:15, sets_label:"3 × 15/gamba", rest:"90 sec", iso:false, tip:"Tutto il peso.", muscles:"Polpaccio (unilaterale)", steps:["Un piede su gradino","Altra gamba su","Scendi e sali","Tieniti al muro"], ytq:"single leg calf raise" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Resistenza", unlockReq:"3x15 1 gamba pulito",
-      levels:[
-        { name:"Calf raise 1 gamba KB (3×12/gamba)", sets:3, reps:12, sets_label:"3 × 12/gamba", rest:"90 sec", iso:false, tip:"KB in mano.", muscles:"Polpaccio (carico)", steps:["KB in mano","Un piede su gradino","Scendi profondo","Sali lento"], ytq:"weighted calf raise" },
-        { name:"Calf raise pausa 3 sec (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"60 sec", iso:false, tip:"Pausa in cima.", muscles:"Polpaccio (intensità)", steps:["Gradino","Sali e tieni 3 sec","Scendi 3 sec","No rimbalzo"], ytq:"calf raise pause top" },
-        { name:"Calf raise 1 gamba (3×20/gamba)", sets:3, reps:20, sets_label:"3 × 20/gamba", rest:"90 sec", iso:false, tip:"Resistenza.", muscles:"Polpaccio", steps:["Un piede","20 rip lente","Controllo","Bruciore"], ytq:"single leg calf raise endurance" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x20 1 gamba pulito",
-      levels:[
-        { name:"Calf raise 1 gamba KB+disco (3×15/gamba)", sets:3, reps:15, sets_label:"3 × 15/gamba", rest:"90 sec", iso:false, tip:"17kg su una gamba.", muscles:"Polpaccio (max)", steps:["KB+disco","Un piede su gradino","ROM completo","Lento"], ytq:"heavy single leg calf raise" },
-        { name:"Calf raise esplosivo (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"60 sec", iso:false, tip:"Sali esplosivo, scendi lento.", muscles:"Polpaccio · Potenza", steps:["Gradino","Sali esplosivo","Tieni 1 sec","Scendi 3 sec"], ytq:"explosive calf raise" },
-        { name:"Calf raise 1 gamba (3×25/gamba)", sets:3, reps:25, sets_label:"3 × 25/gamba", rest:"90 sec", iso:false, tip:"Resistenza estrema.", muscles:"Polpaccio (élite)", steps:["Un piede","25 rip pulite","No rimbalzo","Controllo"], ytq:"single leg calf raise high rep" }
-      ]}
-  ]},
-  wallsit: { name:"Wall Sit", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x45\" wall sit",
-      levels:[
-        { name:"Wall sit (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"90 sec", iso:true, tip:"Ginocchia a 90°.", muscles:"Quadricipiti · Glutei", steps:["Schiena completamente a contatto con il muro in ogni punto","Scendi fino a ginocchia a 90 gradi con le cosce parallele al suolo","Piedi piatti a terra larghezza spalle, ginocchia sopra le caviglie","Respira regolarmente - non trattenere il respiro, e soprattutto una gara mentale"], ytq:"wall sit tutorial" },
-        { name:"Wall sit (3×45\")", sets:3, reps:45, sets_label:"3 × 45 sec", rest:"90 sec", iso:true, tip:"Conta ad alta voce.", muscles:"Quadricipiti", steps:["Stessa forma","90°","Respira profondo","Non cedere"], ytq:"wall sit 45 seconds" },
-        { name:"Wall sit calf raise (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"90 sec", iso:true, tip:"Alterna talloni.", muscles:"Quadricipiti · Polpacci", steps:["Wall sit 90°","Solleva tallone dx","Abbassa, solleva sx","Mantieni"], ytq:"wall sit heel raise" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Resistenza", unlockReq:"3x30\" wall sit calf raise",
-      levels:[
-        { name:"Wall sit (3×60\")", sets:3, reps:60, sets_label:"3 × 60 sec", rest:"2 min", iso:true, tip:"1 minuto.", muscles:"Quadricipiti · Mentale", steps:["90° perfetti","60 secondi","Respira","Non cedere"], ytq:"wall sit 60 seconds" },
-        { name:"Wall sit KB (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"90 sec", iso:true, tip:"KB al petto.", muscles:"Quadricipiti · Core", steps:["KB 12kg al petto","Wall sit 90°","Tieni 30 sec","Respira"], ytq:"wall sit kettlebell" },
-        { name:"Wall sit 1 gamba (3×15\"/gamba)", sets:3, reps:15, sets_label:"3 × 15\"/gamba", rest:"90 sec", iso:true, sides:2, tip:"Una gamba tesa.", muscles:"Quadricipiti (unilaterale)", steps:["Wall sit","Estendi una gamba","Tieni 15 sec","Cambia"], ytq:"single leg wall sit" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x15\" wall sit 1 gamba",
-      levels:[
-        { name:"Wall sit (3×90\")", sets:3, reps:90, sets_label:"3 × 90 sec", rest:"2 min", iso:true, tip:"90 secondi.", muscles:"Quadricipiti (élite)", steps:["90° perfetti","90 secondi","Mentale > fisico","Respira"], ytq:"wall sit 90 seconds" },
-        { name:"Wall sit 1 gamba (3×25\"/gamba)", sets:3, reps:25, sets_label:"3 × 25\"/gamba", rest:"2 min", iso:true, sides:2, tip:"Resistenza unilaterale.", muscles:"Quadricipiti (max)", steps:["Una gamba tesa","25 sec","No cedimento","Respira"], ytq:"single leg wall sit advanced" },
-        { name:"Wall sit KB 1 gamba (3×15\"/gamba)", sets:3, reps:15, sets_label:"3 × 15\"/gamba", rest:"2 min", iso:true, sides:2, tip:"KB + 1 gamba.", muscles:"Quadricipiti · Core (élite)", steps:["KB al petto","Una gamba tesa","15 sec","Cambia"], ytq:"weighted single leg wall sit" }
-      ]}
-  ]},
-  crunch: { name:"Crunch & Addominali", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x12 sit-up completi",
-      levels:[
-        { name:"Crunch base (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"60 sec", iso:false, tip:"Non tirare il collo.", muscles:"Retto addominale", steps:["Ginocchia a 90°","Mani alle orecchie","Solleva spalle","Scendi lento"], ytq:"crunch forma corretta" },
-        { name:"Crunch pausa 2 sec (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"60 sec", iso:false, tip:"2 sec in cima.", muscles:"Retto addominale", steps:["Crunch normale","Tieni 2 sec cima","Contrai al max","Scendi lento"], ytq:"crunch pausa 2 sec" },
-        { name:"Crunch bicicletta (3×20)", sets:3, reps:20, sets_label:"3 × 20 rip", rest:"60 sec", iso:false, tip:"Gomito-ginocchio opposto.", muscles:"Retto · Obliqui", steps:["Sdraiato, mani leggere alle orecchie, gambe a 90 gradi in aria","Ruota il busto portando il gomito destro verso il ginocchio sinistro","Contemporaneamente estendi la gamba destra tenendola sollevata","Alterna lentamente - la velocita non conta, la rotazione del busto si"], ytq:"bicycle crunch tutorial" },
-        { name:"Sit-up completo (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"Piedi bloccati.", muscles:"Retto completo", steps:["Piedi bloccati sotto un supporto, ginocchia piegate, braccia incrociate al petto","Sali portando il busto completamente seduto contraendo gli addominali","Scendi lentamente in 3 sec - la fase eccentrica costruisce piu forza","Mantieni la schiena curva nella discesa - non toccare il suolo di colpo"], ytq:"sit up completo tutorial" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Compressione", unlockReq:"3x12 sit-up + 3x20 bicicletta",
-      levels:[
-        { name:"Sit-up KB 12kg (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"KB al petto.", muscles:"Retto · Core", steps:["KB al petto","Piedi bloccati","Sali seduto","Scendi controllato"], ytq:"weighted sit up kettlebell" },
-        { name:"V-up (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Mani e piedi si toccano.", muscles:"Retto completo", steps:["Sdraiato","Solleva busto e gambe","Tocca punte","Scendi lento"], ytq:"v up tutorial" },
-        { name:"Crunch bicicletta (3×30)", sets:3, reps:30, sets_label:"3 × 30 rip", rest:"60 sec", iso:false, tip:"Volume alto.", muscles:"Retto · Obliqui", steps:["Stessa forma","30 rip lente","Controllo","No velocità"], ytq:"bicycle crunch high rep" },
-        { name:"Hanging knee raise (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Alla sbarra.", muscles:"Addome · Presa", steps:["Appeso alla sbarra con presa salda e corpo fermo","Porta le ginocchia al petto contraendo gli addominali - non usare slancio","Tieni 1 sec in alto sentendo la contrazione del core","Scendi lentamente in 3 sec controllando ogni centimetro"], ytq:"hanging knee raise" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x10 V-up puliti",
-      levels:[
-        { name:"V-up (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Retto completo", steps:["Stessa forma","15 rip pulite","Controllo","No slancio"], ytq:"v up volume" },
-        { name:"Toes to bar (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi alla sbarra.", muscles:"Core · Presa", steps:["Appeso alla sbarra","Porta piedi alla sbarra","Controllato","No kipping"], ytq:"toes to bar tutorial" },
-        { name:"Dragon flag (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Corpo rigido.", muscles:"Core (élite)", steps:["Afferra supporto","Solleva corpo dritto","Scendi controllato","Risali"], ytq:"dragon flag full" }
-      ]}
-  ]},  
-    reversecrunch: { name:"Reverse Crunch", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 leg raise",
-      levels:[
-        { name:"Reverse crunch (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"60 sec", iso:false, tip:"Arriccia il bacino.", muscles:"Addome inferiore", steps:["Gambe a 90°","Porta ginocchia al petto","Arriccia bacino","Scendi lento"], ytq:"reverse crunch tutorial" },
-        { name:"Reverse crunch estensione (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"Estendi gambe su.", muscles:"Addome inferiore", steps:["Ginocchia al petto","Estendi gambe su","Abbassa lento","Ripeti"], ytq:"reverse crunch extension" },
-        { name:"Leg raise (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Schiena bassa a terra.", muscles:"Addome inferiore", steps:["Gambe tese","Abbassa a 5cm","Risali","Schiena incollata"], ytq:"leg raise tutorial" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Leva", unlockReq:"3x10 leg raise schiena piatta",
-      levels:[
-        { name:"Leg raise (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Addome inferiore", steps:["Stessa forma","15 rip","Schiena piatta","Controllo"], ytq:"leg raise volume" },
-        { name:"Leg raise pausa (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Pausa 2 sec in alto.", muscles:"Addome inferiore", steps:["Gambe tese","Tieni 2 sec in alto","Abbassa 3 sec","Schiena piatta"], ytq:"leg raise pause" },
-        { name:"Hanging leg raise (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Gambe tese.", muscles:"Addome · Presa", steps:["Appeso","Gambe tese su","No dondolio","Controllo"], ytq:"hanging leg raise" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x10 hanging knee raise",
-      levels:[
-        { name:"Toes to bar (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi alla sbarra.", muscles:"Core · Presa", steps:["Appeso","Piedi alla sbarra","Controllato","No kipping"], ytq:"toes to bar" },
-        { name:"Dragon flag negativo (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Scendi 5 sec.", muscles:"Core (élite)", steps:["Sdraiato, braccia sopra la testa e gambe tese","Solleva contemporaneamente busto e gambe cercando di toccare le punte dei piedi","Scendi lentamente in 3 sec mantenendo il controllo - non cadere","La schiena bassa deve restare il piu possibile in contatto col suolo"], ytq:"dragon flag negative" },
-        { name:"L-Sit a terra (3×15\")", sets:3, reps:15, sets_label:"3 × 15 sec", rest:"90 sec", iso:true, tip:"Mani a terra, gambe tese.", muscles:"Core · Flessori anca", steps:["Mani a terra","Spingi forte","Gambe tese su","Tieni"], ytq:"l sit floor tutorial" }
-      ]}
-  ]},
-  mountainclimber: { name:"Mountain Climbers", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x40 ritmo medio",
-      levels:[
-        { name:"Mountain climbers lenti (3×30)", sets:3, reps:30, sets_label:"3 × 30 rip", rest:"60 sec", iso:false, tip:"Ritmo lento, forma.", muscles:"Core · Spalle", steps:["Parti in plank su braccia tese con corpo perfettamente rigido","Porta un ginocchio verso il petto mantenendo i fianchi bassi","Alterna le gambe lentamente - 2 sec per gamba - core sempre attivo","I fianchi restano alla stessa altezza delle spalle - non ondeggiare"], ytq:"mountain climbers slow" },
-        { name:"Mountain climbers medi (3×40)", sets:3, reps:40, sets_label:"3 × 40 rip", rest:"60 sec", iso:false, tip:"Ritmo medio.", muscles:"Core · Cardio", steps:["Plank teso","Ritmo medio","Bacino basso","Respira"], ytq:"mountain climbers medium" },
-        { name:"Mountain climbers HIIT (3×20\")", sets:3, reps:20, sets_label:"3 × 20 sec", rest:"90 sec", iso:true, tip:"20 sec all-out.", muscles:"Core · Cardio HIIT", steps:["Plank perfetto","Max velocità","Core contratto","20 sec no stop"], ytq:"mountain climbers HIIT" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Cardio", unlockReq:"3x20\" HIIT pulito",
-      levels:[
-        { name:"Mountain climbers (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"90 sec", iso:true, tip:"30 sec all-out.", muscles:"Core · Cardio", steps:["Plank","30 sec max","No cedimento","Respira"], ytq:"mountain climbers 30 sec" },
-        { name:"Cross-body climbers (3×20)", sets:3, reps:20, sets_label:"3 × 20 rip", rest:"60 sec", iso:false, tip:"Ginocchio al gomito opposto.", muscles:"Core · Obliqui", steps:["Plank","Ginocchio dx → gomito sx","Alterna","Bacino basso"], ytq:"cross body mountain climbers" },
-        { name:"Mountain climbers (4×30\")", sets:4, reps:30, sets_label:"4 × 30 sec", rest:"90 sec", iso:true, tip:"4 serie.", muscles:"Core · Cardio", steps:["Plank","30 sec max","4 serie","Recupera"], ytq:"mountain climbers endurance" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"4x30\" mountain climbers",
-      levels:[
-        { name:"Mountain climbers (4×40\")", sets:4, reps:40, sets_label:"4 × 40 sec", rest:"90 sec", iso:true, tip:"Resistenza estrema.", muscles:"Core · Cardio", steps:["Plank","40 sec max","4 serie","No cedimento"], ytq:"mountain climbers advanced" },
-        { name:"Spider climbers (3×12/lato)", sets:3, reps:12, sets_label:"3 × 12/lato", rest:"90 sec", iso:false, tip:"Ginocchio al gomito esterno.", muscles:"Core · Obliqui · Mobilità", steps:["Plank","Ginocchio fuori al gomito","Alterna","Bacino basso"], ytq:"spider mountain climbers" },
-        { name:"Tabata climbers (8×20\")", sets:8, reps:20, sets_label:"8 × 20 sec", rest:"10 sec", iso:true, tip:"Tabata: 20 on / 10 off × 8.", muscles:"Core · Cardio (élite)", steps:["Plank","20 sec max","10 sec riposo","8 round"], ytq:"tabata mountain climbers" }
-      ]}
-  ]},
-  hollowbody: { name:"Hollow Body", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x15 hollow body rocks",
-      levels:[
-        { name:"Barchetta ginocchia (3×20\")", sets:3, reps:20, sets_label:"3 × 20 sec", rest:"60 sec", iso:true, tip:"Schiena bassa a terra.", muscles:"Core completo", steps:["Braccia ai fianchi","Gambe piegate 90°","Schiena incollata","Respira"], ytq:"hollow body knees" },
-        { name:"Barchetta ginocchia (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"60 sec", iso:true, tip:"10 sec in più.", muscles:"Core completo", steps:["Stessa forma","30 sec","Schiena a terra","Respira"], ytq:"hollow body hold 30s" },
-        { name:"Hollow body gambe tese (3×20\")", sets:3, reps:20, sets_label:"3 × 20 sec", rest:"90 sec", iso:true, tip:"Gambe tese.", muscles:"Core · Retto", steps:["Gambe tese 45°","Schiena incollata","Braccia ai fianchi","Tieni"], ytq:"hollow body legs straight" },
-        { name:"Hollow body braccia su (3×25\")", sets:3, reps:25, sets_label:"3 × 25 sec", rest:"90 sec", iso:true, tip:"Braccia sopra testa.", muscles:"Core (alta intensità)", steps:["Gambe tese","Braccia sopra testa","Banana concava","Schiena a terra"], ytq:"hollow body arms overhead" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Compressione", unlockReq:"3x15 hollow rocks puliti",
-      levels:[
-        { name:"Hollow body rocks (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"90 sec", iso:false, tip:"Dondola mantenendo forma.", muscles:"Core · Coordinazione", steps:["Parti in posizione hollow con schiena incollata, gambe e braccia sollevate","Dondola in avanti verso le spalle mantenendo la curva del corpo invariata","Dondola indietro verso i glutei senza perdere la tensione del core","Il movimento e fluido come una barca a dondolo - mai spezzare la forma"], ytq:"hollow body rocks" },
-        { name:"Hollow rocks (3×20)", sets:3, reps:20, sets_label:"3 × 20 rip", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Core completo", steps:["Hollow completa","20 rocks","Forma perfetta","No cedimento"], ytq:"hollow rocks volume" },
-        { name:"Hollow hold (3×40\")", sets:3, reps:40, sets_label:"3 × 40 sec", rest:"90 sec", iso:true, tip:"40 sec statica.", muscles:"Core completo", steps:["Hollow completa","40 sec","Respira","Non cedere"], ytq:"hollow body hold 40s" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x40\" hollow hold",
-      levels:[
-        { name:"Hollow hold (3×60\")", sets:3, reps:60, sets_label:"3 × 60 sec", rest:"2 min", iso:true, tip:"1 minuto.", muscles:"Core (élite)", steps:["Hollow completa","60 sec","Mentale > fisico","Respira"], ytq:"hollow body hold 60s" },
-        { name:"Hollow rocks (3×25)", sets:3, reps:25, sets_label:"3 × 25 rip", rest:"90 sec", iso:false, tip:"Volume élite.", muscles:"Core completo", steps:["Hollow completa","25 rocks","Forma perfetta","No cedimento"], ytq:"hollow rocks advanced" },
-        { name:"Hollow body KB press (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"KB press da hollow.", muscles:"Core · Spalle (élite)", steps:["Hollow position","KB al petto","Press sopra","Tieni hollow"], ytq:"hollow body kettlebell press" }
-      ]}
-  ]},  
-    superman: { name:"Superman & Schiena", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 superman Y-T",
-      levels:[
-        { name:"Superman pausa 2 sec (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"60 sec", iso:false, tip:"Schiaccia scapole.", muscles:"Erettori · Glutei", steps:["Pancia a terra con braccia estese davanti e gambe tese e unite","Solleva contemporaneamente petto braccia e gambe contrendo la schiena bassa","Tieni 2 sec contraendo attivamente glutei e schiena bassa","Abbassa lentamente senza cadere di colpo - controllo totale"], ytq:"superman exercise tutorial" },
-        { name:"Prone Y-T-W (3×8/lettera)", sets:3, reps:8, sets_label:"3 × 8/lett", rest:"60 sec", iso:false, tip:"3 posizioni.", muscles:"Romboidi · Trapezio", steps:["Y: braccia 45°","T: braccia laterali","W: gomiti piegati","8 per lettera"], ytq:"YTW prone exercise" },
-        { name:"Superman Y→T (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"60 sec", iso:false, tip:"Ruota Y a T in alto.", muscles:"Schiena alta", steps:["Superman alto","Braccia a Y","Ruota a T","Torna Y, abbassa"], ytq:"superman Y to T rotation" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Postura", unlockReq:"3x10 superman Y-T pulito",
-      levels:[
-        { name:"Superman hold (3×20\")", sets:3, reps:20, sets_label:"3 × 20 sec", rest:"60 sec", iso:true, tip:"Tieni la posizione alta.", muscles:"Erettori · Glutei", steps:["Solleva tutto","Tieni 20 sec","Scapole schiacciate","Respira"], ytq:"superman hold isometric" },
-        { name:"Prone Y-T-W (4×10/lettera)", sets:4, reps:10, sets_label:"4 × 10/lett", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Schiena alta", steps:["4 serie","10 per lettera","Lento","Senti ogni muscolo"], ytq:"YTW volume back" },
-        { name:"Superman nuotatore (3×20)", sets:3, reps:20, sets_label:"3 × 20 rip", rest:"60 sec", iso:false, tip:"Alterna braccia e gambe.", muscles:"Erettori · Coordinazione", steps:["Pancia a terra","Braccio dx + gamba sx su","Alterna","Ritmo costante"], ytq:"superman swimmer exercise" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x20\" superman hold",
-      levels:[
-        { name:"Superman hold (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"90 sec", iso:true, tip:"30 sec.", muscles:"Erettori (élite)", steps:["Tutto sollevato","30 sec","Scapole schiacciate","Respira"], ytq:"superman hold 30 seconds" },
-        { name:"Prone Y-T-W KB (3×6/lettera)", sets:3, reps:6, sets_label:"3 × 6/lett", rest:"90 sec", iso:false, tip:"Con disco 5kg.", muscles:"Schiena alta (carico)", steps:["Disco in mano","Y-T-W con peso","Lento","Controllo"], ytq:"weighted YTW exercise" },
-        { name:"Superman archer (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"90 sec", iso:false, tip:"Tira un braccio indietro.", muscles:"Schiena alta · Romboidei", steps:["Superman alto","Tira braccio dx indietro","Come arco","Alterna"], ytq:"superman archer pull" }
-      ]}
-  ]},
-  sideplank: { name:"Plank Laterale", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x25\" plank laterale completo",
-      levels:[
-        { name:"Plank lat. modificato (3×20\"/lato)", sets:3, reps:20, sets_label:"3 × 20\"/lato", rest:"60 sec", iso:true, sides:2, tip:"Ginocchio a terra.", muscles:"Obliqui", steps:["Avambraccio a terra","Ginocchio basso","Fianchi su","No rotazione"], ytq:"modified side plank" },
-        { name:"Plank lat. completo (3×25\"/lato)", sets:3, reps:25, sets_label:"3 × 25\"/lato", rest:"90 sec", iso:true, sides:2, tip:"Piedi uniti.", muscles:"Obliqui · Spalla", steps:["Avambraccio","Piedi uniti","Fianchi alti","Respira"], ytq:"side plank full" },
-        { name:"Plank lat. hip dip (3×12/lato)", sets:3, reps:12, sets_label:"3 × 12/lato", rest:"90 sec", iso:false, tip:"Abbassa e risolleva.", muscles:"Obliqui (dinamico)", steps:["Plank laterale","Abbassa fianco","Risolleva","No rotazione"], ytq:"side plank hip dip" },
-        { name:"Plank lat. rotazione (3×10/lato)", sets:3, reps:10, sets_label:"3 × 10/lato", rest:"90 sec", iso:false, tip:"Braccio sotto.", muscles:"Obliqui · Mobilità", steps:["Plank laterale","Braccio ruota sotto","Torna su","Fianchi alti"], ytq:"side plank thread needle" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Stabilità", unlockReq:"3x10/lato rotazione pulito",
-      levels:[
-        { name:"Plank lat. (3×35\"/lato)", sets:3, reps:35, sets_label:"3 × 35\"/lato", rest:"90 sec", iso:true, sides:2, tip:"35 sec.", muscles:"Obliqui", steps:["Plank laterale","35 sec","Fianchi alti","Respira"], ytq:"side plank 35 seconds" },
-        { name:"Plank lat. stella (3×15\"/lato)", sets:3, reps:15, sets_label:"3 × 15\"/lato", rest:"90 sec", iso:true, sides:2, tip:"Gamba e braccio su.", muscles:"Obliqui · Gluteo medio", steps:["Plank laterale","Gamba su, braccio su","Stella","Tieni 15 sec"], ytq:"star side plank" },
-        { name:"Plank lat. hip dip (3×15/lato)", sets:3, reps:15, sets_label:"3 × 15/lato", rest:"90 sec", iso:false, tip:"Volume aumentato.", muscles:"Obliqui", steps:["Side plank su avambraccio con fianchi alti - stessa forma base","Abbassa lentamente il fianco verso il suolo senza toccarlo","Risolleva il fianco contraendo gli obliqui - 15 rip per lato","Non cedere la posizione delle spalle durante tutto il movimento"], ytq:"side plank hip dip volume" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x15\"/lato stella",
-      levels:[
-        { name:"Plank lat. (3×45\"/lato)", sets:3, reps:45, sets_label:"3 × 45\"/lato", rest:"2 min", iso:true, sides:2, tip:"45 sec.", muscles:"Obliqui (élite)", steps:["Plank laterale","45 sec","Fianchi perfetti","Respira"], ytq:"side plank 45 seconds" },
-        { name:"Plank lat. stella (3×25\"/lato)", sets:3, reps:25, sets_label:"3 × 25\"/lato", rest:"2 min", iso:true, sides:2, tip:"25 sec stella.", muscles:"Obliqui · Gluteo medio", steps:["Stella","25 sec","No cedimento","Respira"], ytq:"star side plank advanced" },
-        { name:"Side plank KB row (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"2 min", iso:false, tip:"Remata in side plank.", muscles:"Obliqui · Dorsali", steps:["Side plank","KB in mano libera","Remata","Fianchi fermi"], ytq:"side plank row kettlebell" }
-      ]}
-  ]},
-  invertedrow: { name:"Inverted Row", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 inverted row presa stretta",
-      levels:[
-        { name:"Inverted row tavolo gambe piegate (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Gambe piegate.", muscles:"Dorsali · Bicipiti", steps:["Sdraiato sotto il tavolo con mani al bordo e ginocchia piegate","Corpo rigido, spingi le scapole verso il basso prima di tirare","Tira il petto verso il bordo tenendo i gomiti vicini al corpo","Tieni 1 sec in cima sentendo la contrazione di dorsali e romboidi"], ytq:"inverted row table bent" },
-        { name:"Inverted row gambe tese (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Gambe tese.", muscles:"Dorsali · Bicipiti", steps:["Gambe completamente tese - aumenta significativamente il peso da sollevare","Corpo perfettamente rigido dalla testa ai talloni con scapole attive","Tira portando il petto al bordo del tavolo, gomiti vicini al corpo","Scendi controllato in 3 sec - la fase eccentrica e fondamentale"], ytq:"inverted row straight legs" },
-        { name:"Inverted row pausa 2 sec (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Pausa in cima.", muscles:"Dorsali · Romboidei", steps:["Gambe tese","Tieni 2 sec cima","Scapole schiacciate","Scendi 3 sec"], ytq:"inverted row pause" },
-        { name:"Inverted row presa stretta (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Mani vicine.", muscles:"Bicipiti · Dorsali", steps:["Mani vicine","Gambe tese","Tira al petto","Gomiti stretti"], ytq:"inverted row close grip" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Trazione", unlockReq:"3x10 inverted row + 3x25\" iso",
-      levels:[
-        { name:"Inverted row isometrico (3×25\")", sets:3, reps:25, sets_label:"3 × 25 sec", rest:"90 sec", iso:true, tip:"Tieni posizione alta.", muscles:"Dorsali · Romboidei", steps:["Tira al max","Tieni 25 sec","Scapole schiacciate","Respira"], ytq:"inverted row isometric hold" },
-        { name:"Inverted row piedi elevati (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi su sedia.", muscles:"Dorsali (carico)", steps:["Piedi su sedia","Corpo orizzontale","Tira al petto","Scendi lento"], ytq:"elevated inverted row" },
-        { name:"Ring row (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Anelli = stabilità.", muscles:"Dorsali · Core", steps:["Anelli all'altezza dei fianchi - piu bassi = piu difficile","Sdraiato sotto, corpo rigido, talloni a terra","Tira portando il petto agli anelli, gomiti vicini al corpo","Scendi lento in 3 sec controllando ogni centimetro"], ytq:"ring row tutorial" },
-        { name:"Trazioni elastico (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"2 min", iso:false, tip:"Elastico sotto piede.", muscles:"Dorsali · Bicipiti", steps:["Elastico alla sbarra","Piede nell'elastico","Tira mento su","Scendi controllato"], ytq:"band assisted chin up" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x10 ring row pulito",
-      levels:[
-        { name:"Ring row piedi elevati (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Piedi su sedia + anelli.", muscles:"Dorsali (avanzato)", steps:["Anelli, piedi su sedia","Corpo orizzontale","Tira al petto","Controlla"], ytq:"elevated ring row" },
-        { name:"Tuck front lever row (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"3 min", iso:false, tip:"Remata in tuck.", muscles:"Dorsali · Core (élite)", steps:["Appeso, tuck","Corpo orizzontale","Remata al petto","Scendi"], ytq:"tuck front lever row" },
-        { name:"Front lever tuck hold (3×10\")", sets:3, reps:10, sets_label:"3 × 10 sec", rest:"2 min", iso:true, tip:"Tieni tuck orizzontale.", muscles:"Dorsali · Core (élite)", steps:["Appeso","Tuck ginocchia","Braccia tese giù","Orizzontale"], ytq:"tuck front lever hold" }
-      ]}
-  ]},  
-    doorframerow: { name:"Doorframe Row", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 doorframe 60°",
-      levels:[
-        { name:"Doorframe row 45° (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Inclinazione 45°.", muscles:"Dorsali · Bicipiti", steps:["Tieni stipite","Inclina 45°","Tira petto","Scendi lento"], ytq:"doorframe row 45" },
-        { name:"Doorframe row 60° (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Quasi orizzontale.", muscles:"Dorsali · Bicipiti", steps:["Inclina 60°","Ginocchia piegate","Tira al petto","Scendi lento"], ytq:"doorframe row 60" },
-        { name:"Doorframe row pausa (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Pausa 2 sec.", muscles:"Dorsali · Romboidei", steps:["60°","Tieni 2 sec","Scapole","Scendi 3 sec"], ytq:"doorframe row pause" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Angolo", unlockReq:"3x10 doorframe pausa pulito",
-      levels:[
-        { name:"Doorframe row 1 braccio (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"2 min", iso:false, tip:"Un braccio alla volta.", muscles:"Dorsali (unilaterale)", steps:["Tieni stipite 1 mano","Inclina","Tira","Alterna"], ytq:"single arm doorframe row" },
-        { name:"Doorframe row basso (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Presa più bassa = più difficile.", muscles:"Dorsali · Bicipiti", steps:["Presa bassa stipite","Inclina di più","Tira al petto","Controllo"], ytq:"low doorframe row" },
-        { name:"Doorframe row pausa 3 sec (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Pausa 3 sec.", muscles:"Dorsali (intensità)", steps:["60°","Tieni 3 sec","Scapole max","Scendi 3 sec"], ytq:"doorframe row long pause" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x8 1 braccio pulito",
-      levels:[
-        { name:"Doorframe row 1 braccio (3×10/lato)", sets:3, reps:10, sets_label:"3 × 10/lato", rest:"2 min", iso:false, tip:"Volume unilaterale.", muscles:"Dorsali (unilaterale)", steps:["1 mano","10 per lato","Controllo","No rotazione"], ytq:"single arm doorframe row volume" },
-        { name:"Towel row 1 braccio (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"2 min", iso:false, tip:"Asciugamano allo stipite.", muscles:"Dorsali · Presa", steps:["Asciugamano allo stipite","1 mano","Tira","Controllo"], ytq:"towel doorframe row" },
-        { name:"Doorframe row 1 braccio pausa (3×8/lato)", sets:3, reps:8, sets_label:"3 × 8/lato", rest:"2 min", iso:false, tip:"Pausa 2 sec.", muscles:"Dorsali (élite)", steps:["1 mano","Pausa 2 sec","Scapole","Scendi 3 sec"], ytq:"single arm row pause" }
-      ]}
-  ]},
-  supermanvol: { name:"Volume Schiena", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"4x10 Y-T-W",
-      levels:[
-        { name:"Superman volume (4×15)", sets:4, reps:15, sets_label:"4 × 15 rip", rest:"90 sec", iso:false, tip:"Volume per schiena.", muscles:"Erettori · Trapezio", steps:["Pancia a terra","Scapole in alto","Tieni 2 sec","Abbassa lento"], ytq:"superman volume back" },
-        { name:"Prone Y-T-W volume (4×10)", sets:4, reps:10, sets_label:"4 × 10/lett", rest:"90 sec", iso:false, tip:"Più serie.", muscles:"Schiena alta", steps:["Y-T-W consecutive","4 serie","Lento","Senti muscoli"], ytq:"YTW volume tutorial" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Postura", unlockReq:"4x10 Y-T-W pulito",
-      levels:[
-        { name:"Superman volume (5×15)", sets:5, reps:15, sets_label:"5 × 15 rip", rest:"90 sec", iso:false, tip:"5 serie.", muscles:"Erettori · Trapezio", steps:["5 serie","15 rip","Scapole","Controllo"], ytq:"superman high volume" },
-        { name:"Prone Y-T-W (5×10)", sets:5, reps:10, sets_label:"5 × 10/lett", rest:"90 sec", iso:false, tip:"5 serie.", muscles:"Schiena alta", steps:["5 serie","10 per lettera","Lento","Postura"], ytq:"YTW high volume" },
-        { name:"Superman hold volume (3×20\")", sets:3, reps:20, sets_label:"3 × 20 sec", rest:"90 sec", iso:true, tip:"Tenuta isometrica.", muscles:"Erettori", steps:["Solleva tutto","Tieni 20 sec","3 serie","Respira"], ytq:"superman hold volume" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"5x10 Y-T-W pulito",
-      levels:[
-        { name:"Superman volume disco (4×12)", sets:4, reps:12, sets_label:"4 × 12 rip", rest:"90 sec", iso:false, tip:"Disco 5kg in mano.", muscles:"Schiena (carico)", steps:["Disco 5kg","Superman con peso","Tieni 2 sec","Controllo"], ytq:"weighted superman" },
-        { name:"Prone Y-T-W disco (4×8)", sets:4, reps:8, sets_label:"4 × 8/lett", rest:"90 sec", iso:false, tip:"Disco 5kg.", muscles:"Schiena alta (carico)", steps:["Disco 5kg","Y-T-W con peso","Lento","Controllo"], ytq:"weighted YTW" },
-        { name:"Superman hold (3×30\")", sets:3, reps:30, sets_label:"3 × 30 sec", rest:"2 min", iso:true, tip:"30 sec.", muscles:"Erettori (élite)", steps:["Tutto su","30 sec","Scapole","Respira"], ytq:"superman hold 30s" }
-      ]}
-  ]},
-  towelcurl: { name:"Bicipiti & Trazione", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x10 towel curl alternato",
-      levels:[
-        { name:"Towel curl isometrico (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"60 sec", iso:false, tip:"Asciugamano sotto ginocchio.", muscles:"Bicipiti", steps:["Asciugamano sotto ginocchio","Piega gomito su","Spingi ginocchio giù","Tieni tensione"], ytq:"towel curl isometric" },
-        { name:"Towel curl alternato (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"60 sec", iso:false, tip:"Alterna bracci.", muscles:"Bicipiti", steps:["Setup asciugamano","Alterna dx-sx","Tensione costante","Contrai in cima"], ytq:"towel curl alternating" },
-        { name:"Chin-up negativo sedia (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"2 min", iso:false, tip:"Scendi 5 sec.", muscles:"Bicipiti · Dorsali", steps:["Sali con la sedia fino ad avere il mento sopra la sbarra","Togli i piedi e parti con le braccia piegate in posizione alta","Scendi lentissimo resistendo per 5-6 secondi con tutta la forza disponibile","Rimetti i piedi e ripeti - ogni negativa lenta vale oro per costruire forza"], ytq:"negative chin up chair" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Trazione", unlockReq:"3x5 chin-up negativi puliti",
-      levels:[
-        { name:"Chin-up negativo (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"Volume aumentato.", muscles:"Bicipiti · Dorsali", steps:["Sali con la sedia portando il mento sopra la sbarra","Togli i piedi e scendi lentissimo in 5-6 sec resistendo con tutta la forza","6 ripetizioni complete - qualita assoluta su ogni singola negativa","Rimetti i piedi, risali e ripeti - la fase eccentrica vale oro"], ytq:"negative chin up volume" },
-        { name:"KB hammer curl 12kg (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Presa neutra.", muscles:"Bicipiti · Avambracci", steps:["KB in mano","Presa neutra","Curl controllato","No slancio"], ytq:"kettlebell hammer curl" },
-        { name:"Trazioni elastico (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"2 min", iso:false, tip:"Elastico sotto piede.", muscles:"Dorsali · Bicipiti", steps:["Elastico alla sbarra","Piede nell'elastico","Tira mento su","Scendi controllato"], ytq:"band assisted chin up" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x5 trazioni elastico",
-      levels:[
-        { name:"Chin-up completo (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"2 min", iso:false, tip:"Presa supina.", muscles:"Bicipiti · Dorsali", steps:["Presa supina","Mento sopra sbarra","Scendi controllato","No kipping"], ytq:"chin up first rep" },
-        { name:"Pull-up completo (3×5)", sets:3, reps:5, sets_label:"3 × 5 rip", rest:"2 min", iso:false, tip:"Presa prona.", muscles:"Dorsali · Bicipiti", steps:["Presa prona","Petto alla sbarra","Scendi controllato","Dead hang"], ytq:"pull up first rep" },
-        { name:"Chin-up (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Volume.", muscles:"Bicipiti · Dorsali", steps:["Presa supina","8 rip pulite","Controllo","No kipping"], ytq:"chin up volume" }
-      ]}
-  ]},
-      burpee: { name:"Burpee", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x8 burpee con salto",
-      levels:[
-        { name:"Burpee silenzioso (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"90 sec", iso:false, tip:"Un piede alla volta, zero rumore.", muscles:"Full body · Cardio", steps:["In piedi, piega il busto e appoggia le mani a terra lentamente","Porta un piede indietro alla volta in posizione plank - niente salti","Fai una flessione completa toccando il petto a terra","Torna su un piede alla volta e raddrizzati - silenzioso e controllato"], ytq:"silent burpee no jump" },
-        { name:"Burpee + push-up silenzioso (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Aggiungi flessione.", muscles:"Full body · Petto", steps:["Plank 1 piede alla volta","Flessione","Risali 1 alla volta","Raddrizzati"], ytq:"burpee push up silent" },
-        { name:"Burpee con salto morbido (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Atterra sulle punte.", muscles:"Full body · Potenza", steps:["Plank","Flessione","Salta su punte","Atterra morbido"], ytq:"soft landing burpee" },
-        { name:"Burpee + push-up + salto (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Versione completa.", muscles:"Full body (alta intensità)", steps:["Plank veloce","Flessione","Salta","Atterra morbido"], ytq:"full burpee tutorial" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Condizionamento", unlockReq:"3x10 burpee completi",
-      levels:[
-        { name:"Burpee KB (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"KB in mano.", muscles:"Full body · Potenza", steps:["KB in mano","Plank con KB","Flessione","Salta con KB"], ytq:"kettlebell burpee" },
-        { name:"Burpee + tuck jump (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"Salto ginocchia al petto.", muscles:"Full body · Esplosività", steps:["Burpee normale","Salto ginocchia al petto","Atterra morbido","Silenzioso"], ytq:"burpee tuck jump" },
-        { name:"Burpee (4×10)", sets:4, reps:10, sets_label:"4 × 10 rip", rest:"2 min", iso:false, tip:"4 serie.", muscles:"Full body · Resistenza", steps:["Stessa forma","4 serie","Controllo","No cedimento"], ytq:"burpee endurance" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"4x10 burpee puliti",
-      levels:[
-        { name:"Burpee man-maker KB (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"Remata + push-up + squat + press.", muscles:"Full body (élite)", steps:["Plank KB","Remata","Push-up + squat","Press sopra testa"], ytq:"man maker kettlebell" },
-        { name:"Burpee + pistol (3×4/gamba)", sets:3, reps:4, sets_label:"3 × 4/gamba", rest:"2 min", iso:false, tip:"Burpee + pistol squat.", muscles:"Full body (élite)", steps:["Burpee","Risali in pistol","Scendi pistol","Alterna gamba"], ytq:"burpee pistol squat combo" },
-        { name:"Burpee (5×10)", sets:5, reps:10, sets_label:"5 × 10 rip", rest:"2 min", iso:false, tip:"50 burpee totali.", muscles:"Full body (élite)", steps:["5 serie","10 rip","Forma perfetta","Resistenza"], ytq:"burpee 50 reps challenge" }
-      ]}
-  ]},
-  fullsquat: { name:"Squat Full Body", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x12 squat press KB",
-      levels:[
-        { name:"Squat isometrico pausa (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"90 sec", iso:false, tip:"Pausa 3 sec.", muscles:"Gambe · Glutei", steps:["Squat normale","Pausa 3 sec","No rimbalzo","Risali lento"], ytq:"squat isometric pause" },
-        { name:"Squat bulgaro (3×8/gamba)", sets:3, reps:8, sets_label:"3 × 8/gamba", rest:"2 min", iso:false, tip:"Piede su sedia.", muscles:"Quadricipiti · Glutei", steps:["Piede post. su sedia","Busto eretto","Scendi","Spingi su"], ytq:"bulgarian squat full body" },
-        { name:"Squat press KB 12kg (3×12)", sets:3, reps:12, sets_label:"3 × 12 rip", rest:"90 sec", iso:false, tip:"KB al petto, press su.", muscles:"Gambe · Spalle", steps:["KB al petto","Squat profondo","Press sopra testa","Stendi"], ytq:"kettlebell squat press" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Coordinazione", unlockReq:"3x12 squat press KB pulito",
-      levels:[
-        { name:"Thruster KB 12kg (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"Squat + press esplosivo.", muscles:"Full body · Potenza", steps:["KB al petto","Squat profondo","Esplosivo press su","Stendi"], ytq:"kettlebell thruster" },
-        { name:"Squat press 1 gamba (3×6/gamba)", sets:3, reps:6, sets_label:"3 × 6/gamba", rest:"2 min", iso:false, tip:"Pistol + press.", muscles:"Gambe · Spalle · Core", steps:["KB in mano","Pistol squat","Press in salita","Alterna"], ytq:"pistol squat press" },
-        { name:"KB swing (3×15)", sets:3, reps:15, sets_label:"3 × 15 rip", rest:"90 sec", iso:false, tip:"Spinta d'anca.", muscles:"Femorali · Glutei", steps:["Piedi piu larghi delle spalle, punte aperte, KB tra i piedi sul suolo","Inclinati in avanti con la schiena dritta come un deadlift - non uno squat","Spingi i fianchi in avanti con forza - sono i fianchi a muovere la KB non le braccia","Lascia la KB oscillare fino all altezza delle spalle poi guidala giù e ripeti"], ytq:"kettlebell swing form" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x10 thruster KB pulito",
-      levels:[
-        { name:"Thruster KB+disco (3×10)", sets:3, reps:10, sets_label:"3 × 10 rip", rest:"2 min", iso:false, tip:"17kg.", muscles:"Full body (carico)", steps:["KB+disco","Squat profondo","Press esplosivo","Stendi"], ytq:"heavy thruster" },
-        { name:"KB clean + press (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Clean al petto + press.", muscles:"Full body · Potenza", steps:["KB a terra","Clean al petto","Press sopra","Ripeti"], ytq:"kettlebell clean and press" },
-        { name:"KB snatch (3×6/braccio)", sets:3, reps:6, sets_label:"3 × 6/braccio", rest:"2 min", iso:false, tip:"Da terra a sopra testa.", muscles:"Full body (élite)", steps:["KB a terra","Swing","Snatch sopra testa","Controlla"], ytq:"kettlebell snatch tutorial" }
-      ]}
-  ]},
-  inchworm: { name:"Inchworm", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"3x8 inchworm",
-      levels:[
-        { name:"Inchworm (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"60 sec", iso:false, tip:"Lento e controllato.", muscles:"Spalle · Core · Femorali", steps:["Piega busto","Cammina mani in plank","Tieni 1 sec","Cammina piedi indietro"], ytq:"inchworm tutorial" },
-        { name:"Inchworm + push-up (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"90 sec", iso:false, tip:"Aggiungi flessione.", muscles:"Spalle · Petto · Core", steps:["Cammina in plank","Flessione","Cammina piedi","Raddrizzati"], ytq:"inchworm push up" },
-        { name:"Inchworm + pike push-up (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"Flessione + pike.", muscles:"Petto · Spalle · Core", steps:["Cammina in plank","Flessione","Pike push-up","Torna su"], ytq:"inchworm pike push up" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Mobilità", unlockReq:"3x6 inchworm + pike",
-      levels:[
-        { name:"Inchworm + 2 push-up (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"2 flessioni in plank.", muscles:"Petto · Spalle · Core", steps:["Cammina in plank","2 flessioni","Cammina piedi","Raddrizzati"], ytq:"inchworm double push up" },
-        { name:"Inchworm + pike + push-up (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"Combo completa.", muscles:"Full upper body", steps:["Cammina in plank","Push-up","Pike push-up","Torna su"], ytq:"inchworm combo" },
-        { name:"Inchworm lento (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"90 sec", iso:false, tip:"5 sec ogni passo.", muscles:"Mobilità · Core", steps:["Cammina LENTISSIMO","5 sec per passo","Plank 5 sec","Torna LENTISSIMO"], ytq:"inchworm slow mobility" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"3x6 combo completa",
-      levels:[
-        { name:"Inchworm + HSPU muro (3×4)", sets:3, reps:4, sets_label:"3 × 4 rip", rest:"3 min", iso:false, tip:"Cammina al muro + HSPU.", muscles:"Spalle · Core (élite)", steps:["Cammina mani al muro","HSPU al muro","Cammina indietro","Raddrizzati"], ytq:"inchworm to handstand" },
-        { name:"Inchworm + push-up + pike (3×8)", sets:3, reps:8, sets_label:"3 × 8 rip", rest:"2 min", iso:false, tip:"Volume combo.", muscles:"Full upper body", steps:["Cammina","Push-up + pike","Torna","8 rip"], ytq:"inchworm combo volume" },
-        { name:"Inchworm KB (3×6)", sets:3, reps:6, sets_label:"3 × 6 rip", rest:"2 min", iso:false, tip:"KB in mano.", muscles:"Full body (élite)", steps:["KB in mano","Cammina in plank","Push-up con KB","Torna su"], ytq:"inchworm kettlebell" }
-      ]}
-  ]},
-  amrap: { name:"AMRAP", phases:[
-    { id:1, name:"Fase 1: Fondamenta", unlockReq:"AMRAP 8 min 5+ giri",
-      levels:[
-        { name:"AMRAP 5 min (3×5+10+15\")", sets:1, reps:0, sets_label:"5 min", rest:"3 min dopo", iso:false, amrap:true, amrapMins:5, tip:"5 push-up → 10 squat → 15\" plank.", muscles:"Full body", steps:["5 push-up","10 squat","15\" plank","Ripeti 5 min"], ytq:"AMRAP 5 min beginner" },
-        { name:"AMRAP 6 min (6+10+20\")", sets:1, reps:0, sets_label:"6 min", rest:"3 min dopo", iso:false, amrap:true, amrapMins:6, tip:"6 push-up → 10 squat pausa → 20\" plank.", muscles:"Full body", steps:["6 push-up","10 squat pausa","20\" plank","Ripeti 6 min"], ytq:"AMRAP 6 min" },
-        { name:"AMRAP 8 min (8+12+30\")", sets:1, reps:0, sets_label:"8 min", rest:"3 min dopo", iso:false, amrap:true, amrapMins:8, tip:"8 push-up → 12 bulgari → 30\" plank.", muscles:"Full body", steps:["8 push-up","12 bulgari","30\" plank","Ripeti 8 min"], ytq:"AMRAP 8 min advanced" }
-      ]},
-    { id:2, name:"Fase 2: Forza & Condizionamento", unlockReq:"AMRAP 8 min 5+ giri",
-      levels:[
-        { name:"AMRAP 8 min KB (8+10+30\")", sets:1, reps:0, sets_label:"8 min", rest:"3 min dopo", iso:false, amrap:true, amrapMins:8, tip:"8 push-up → 10 KB swing → 30\" plank.", muscles:"Full body · KB", steps:["8 push-up","10 KB swing","30\" plank","Ripeti 8 min"], ytq:"AMRAP kettlebell circuit" },
-        { name:"AMRAP 10 min (10+12+30\")", sets:1, reps:0, sets_label:"10 min", rest:"3 min dopo", iso:false, amrap:true, amrapMins:10, tip:"10 burpee → 12 squat → 30\" hollow.", muscles:"Full body", steps:["10 burpee","12 squat","30\" hollow","Ripeti 10 min"], ytq:"AMRAP 10 min" },
-        { name:"AMRAP 10 min KB (8+15+10)", sets:1, reps:0, sets_label:"10 min", rest:"3 min dopo", iso:false, amrap:true, amrapMins:10, tip:"8 thruster → 15 swing → 10 hollow rocks.", muscles:"Full body · KB", steps:["8 thruster KB","15 KB swing","10 hollow rocks","Ripeti 10 min"], ytq:"AMRAP 10 min kettlebell" }
-      ]},
-    { id:3, name:"Fase 3: Skill & Maestria", unlockReq:"AMRAP 10 min 4+ giri",
-      levels:[
-        { name:"AMRAP 12 min (10+10+10)", sets:1, reps:0, sets_label:"12 min", rest:"3 min dopo", iso:false, amrap:true, amrapMins:12, tip:"10 burpee → 10 KB swing → 10 toes to bar.", muscles:"Full body (élite)", steps:["10 burpee","10 KB swing","10 toes to bar","Ripeti 12 min"], ytq:"AMRAP 12 min elite" },
-        { name:"AMRAP 15 min (8+12+15)", sets:1, reps:0, sets_label:"15 min", rest:"5 min dopo", iso:false, amrap:true, amrapMins:15, tip:"8 man-maker → 12 bulgari → 15 hollow rocks.", muscles:"Full body (élite)", steps:["8 man-maker KB","12 bulgari","15 hollow rocks","Ripeti 15 min"], ytq:"AMRAP 15 min challenge" },
-        { name:"AMRAP 20 min (10+15+20)", sets:1, reps:0, sets_label:"20 min", rest:"5 min dopo", iso:false, amrap:true, amrapMins:20, tip:"10 burpee → 15 KB swing → 20 hollow rocks.", muscles:"Full body (maestria)", steps:["10 burpee","15 KB swing","20 hollow rocks","Ripeti 20 min"], ytq:"AMRAP 20 min ultimate" }
-      ]}
-  ]},
+    ]
+  },
 
-  lsit: { name:"L-sit", phases:[
-    { id:1, name:"Fase 1", unlockReq:"Sollevare il sedere 3 sec",
-      levels:[
-        { name:"L-sit sollevamento (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"60 sec", iso:true, tip:"Mani ai fianchi, spingi e solleva.", muscles:"Tricipiti - Core", steps:["Mani ai fianchi a terra","Spingi e solleva il sedere","Anche 1cm conta","Tieni 5 sec braccia tese"], ytq:"L-sit floor progression" },
-        { name:"L-sit sollevamento (3x8\")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"60 sec", iso:true, tip:"Aumenta il tempo.", muscles:"Tricipiti - Core", steps:["Stessa posizione","Spingi forte sollevando il sedere","Tieni 8 sec braccia tese","Respira regolarmente"], ytq:"L-sit hold beginner" },
-        { name:"Tuck L-sit (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"90 sec", iso:true, tip:"Ginocchia al petto sollevate.", muscles:"Tricipiti - Core", steps:["Mani ai fianchi, sedere su","Porta le ginocchia al petto","Tieni 5 sec","Braccia completamente tese"], ytq:"tuck L-sit hold" }
+  dips: { name:"Dips", color:"push",
+    phases:[
+      { name:"Fase 1 – Dips assistite", rest:120, levels:[
+        { name:"Dips parallele elastico singolo (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Dips parallele elastico singolo (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Dips parallele elastico medio (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Dips parallele elastico medio (3×8)", sets:3, reps:8, rest:120 }
       ]},
-    { id:2, name:"Fase 2", unlockReq:"3x5 tuck L-sit",
-      levels:[
-        { name:"Tuck L-sit (3x10\")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"90 sec", iso:true, tip:"10 sec ginocchia al petto.", muscles:"Tricipiti - Core", steps:["Sedere sollevato","Ginocchia compatte al petto","Tieni 10 sec","Braccia tese"], ytq:"tuck L-sit 10 seconds" },
-        { name:"L-sit 1 gamba tesa (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"90 sec", iso:true, tip:"Una gamba tesa, una piegata.", muscles:"Core - Flessori anca", steps:["Tuck L-sit base","Estendi una gamba orizzontale","Altra gamba piegata al petto","Alterna tra le serie"], ytq:"single leg L-sit" },
-        { name:"L-sit 1 gamba tesa (3x8\")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"2 min", iso:true, tip:"8 sec con una gamba tesa.", muscles:"Core - Flessori anca", steps:["Una gamba tesa orizzontale","Altra gamba piegata","8 sec - gamba tesa orizzontale","Respira regolarmente"], ytq:"L-sit one leg extended" }
+      { name:"Fase 2 – Dips libere", rest:120, levels:[
+        { name:"Dips parallele elastico leggero (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Dips parallele elastico leggero (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Dips parallele (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Dips parallele (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Dips parallele (3×8)", sets:3, reps:8, rest:120 }
       ]},
-    { id:3, name:"Fase 3", unlockReq:"3x8 una gamba tesa",
-      levels:[
-        { name:"L-sit completo (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"2 min", iso:true, tip:"Entrambe le gambe tese a 90 gradi.", muscles:"Core - Flessori anca - Tricipiti", steps:["Sedere sollevato","Entrambe le gambe tese davanti","Gambe orizzontali a 90 gradi","5 sec - gia un ottimo risultato"], ytq:"L-sit full tutorial" },
-        { name:"L-sit completo (3x10\")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"2 min", iso:true, tip:"10 sec completi.", muscles:"Core - Flessori anca", steps:["Stessa forma L-sit completo","10 sec gambe orizzontali","Non cedere sulla posizione","Spingi forte con le mani"], ytq:"L-sit 10 seconds hold" },
-        { name:"L-sit agli anelli (3x8\")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"2 min", iso:true, tip:"Anelli - instabilita aggiuntiva.", muscles:"Core - Tricipiti", steps:["Anelli bassi, braccia tese","Solleva il corpo","Gambe tese davanti","8 sec - corpo fermo"], ytq:"L-sit on rings" }
+      { name:"Fase 3 – Dips pesanti", rest:120, levels:[
+        { name:"Dips parallele (3×12)", sets:3, reps:12, rest:120 },
+        { name:"Dips anelli (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Dips anelli (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Dips weighted (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Dips weighted (3×8)", sets:3, reps:8, rest:120 }
       ]}
-  ]},
+    ]
+  },
 
-  planche: { name:"Planche", phases:[
-    { id:1, name:"Fase 1", unlockReq:"Planche lean 10 sec",
-      levels:[
-        { name:"Planche lean (3x10\")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"60 sec", iso:true, tip:"Spalle avanti rispetto alle mani.", muscles:"Spalle - Core", steps:["Plank braccia tese","Sposta spalle avanti oltre i polsi","Corpo rigido - solo spalle si spostano","Tieni 10 sec"], ytq:"planche lean tutorial" },
-        { name:"Planche lean (3x20\")", sets:3, reps:20, sets_label:"3 x 20 sec", rest:"90 sec", iso:true, tip:"20 sec spalle oltre i polsi.", muscles:"Spalle - Core", steps:["Stessa posizione lean","Spalle oltre i polsi","20 sec senza cedere","Protrai le scapole attivamente"], ytq:"planche lean 20 seconds" },
-        { name:"Planche lean mani ruotate (3x15\")", sets:3, reps:15, sets_label:"3 x 15 sec", rest:"90 sec", iso:true, tip:"Mani ruotate verso esterno 45 gradi.", muscles:"Spalle - Polsi", steps:["Mani ruotate 45 gradi verso esterno","Spalle oltre i polsi","15 sec","Senti la differenza rispetto alle mani normali"], ytq:"planche lean wrist rotation" }
+  wallpushup_shoulder: { name:"Spalle & Pike", color:"push",
+    phases:[
+      { name:"Fase 1 – Pike push-up", rest:90, levels:[
+        { name:"Pike push-up piedi su sedia (3×8)", sets:3, reps:8, rest:90 },
+        { name:"Pike push-up piedi su sedia (3×10)", sets:3, reps:10, rest:90 },
+        { name:"Pike push-up piedi alti (3×6)", sets:3, reps:6, rest:90 },
+        { name:"Pike push-up piedi alti (3×8)", sets:3, reps:8, rest:90 },
+        { name:"Pike push-up negativi 5sec (3×5)", sets:3, reps:5, rest:120 }
       ]},
-    { id:2, name:"Fase 2", unlockReq:"3x15 planche lean mani ruotate",
-      levels:[
-        { name:"Pseudo planche push-up (3x5)", sets:3, reps:5, sets_label:"3 x 5 rip", rest:"90 sec", iso:false, tip:"Mani verso i piedi, spalle oltre polsi.", muscles:"Spalle - Tricipiti", steps:["Mani ruotate verso i piedi","Spalle oltre i polsi","Scendi mantenendo spalle avanti","Spingi su - tricipiti e spalle anteriori"], ytq:"pseudo planche push up" },
-        { name:"Pseudo planche push-up (3x8)", sets:3, reps:8, sets_label:"3 x 8 rip", rest:"2 min", iso:false, tip:"Volume aumentato.", muscles:"Spalle - Tricipiti", steps:["Stessa forma pseudo planche","8 rip spalle sempre oltre i polsi","Qualita sopra il numero","Non perdere posizione nella stanchezza"], ytq:"pseudo planche push up 8" },
-        { name:"Tuck planche (3x3\")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"2 min", iso:true, tip:"Sedere sollevato, ginocchia al petto.", muscles:"Spalle - Core", steps:["Mani ruotate verso i piedi","Spingi avanti sollevando il sedere","Ginocchia al petto - corpo orizzontale","3 sec - risultato enorme"], ytq:"tuck planche hold" }
+      { name:"Fase 2 – HSPU negativo", rest:120, levels:[
+        { name:"HSPU negativo al muro 5sec (3×3)", sets:3, reps:3, rest:120 },
+        { name:"HSPU negativo al muro 5sec (3×5)", sets:3, reps:5, rest:120 },
+        { name:"HSPU negativo + partial press (3×5)", sets:3, reps:5, rest:120 },
+        { name:"HSPU parziale al muro (3×3)", sets:3, reps:3, rest:120 },
+        { name:"HSPU parziale al muro (3×5)", sets:3, reps:5, rest:120 }
       ]},
-    { id:3, name:"Fase 3", unlockReq:"3x3 tuck planche",
-      levels:[
-        { name:"Tuck planche (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"2 min", iso:true, tip:"5 sec tuck planche.", muscles:"Spalle - Core", steps:["Corpo orizzontale ginocchia al petto","5 sec schiena piatta","Spingi forte con le mani","Non cedere"], ytq:"tuck planche 5 seconds" },
-        { name:"Tuck planche (3x8\")", sets:3, reps:8, sets_label:"3 x 8 sec", rest:"3 min", iso:true, tip:"8 sec - obiettivo Skill Goals.", muscles:"Spalle - Core elite", steps:["Tuck planche corpo orizzontale","8 sec controllo totale","Corpo fermo senza oscillare","Obiettivo Skill Goals raggiunto"], ytq:"tuck planche 8 seconds" },
-        { name:"Advanced tuck planche (3x3\")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"3 min", iso:true, tip:"Gambe piu estese rispetto al tuck.", muscles:"Spalle elite - Core", steps:["Tuck ma ginocchia leggermente estese","Corpo orizzontale schiena piatta","Momento di forza maggiore","3 sec verso la planche completa"], ytq:"advanced tuck planche" }
+      { name:"Fase 3 – HSPU completo", rest:120, levels:[
+        { name:"Handstand push-up muro (3×1)", sets:3, reps:1, rest:120 },
+        { name:"Handstand push-up muro (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Handstand push-up muro (3×5)", sets:3, reps:5, rest:120 },
+        { name:"HSPU schiena al muro (3×3)", sets:3, reps:3, rest:120 },
+        { name:"HSPU schiena al muro (3×5)", sets:3, reps:5, rest:120 }
       ]}
-  ]},
+    ]
+  },
 
-  frontlever: { name:"Front Lever", phases:[
-    { id:1, name:"Fase 1", unlockReq:"Tuck front lever 5 sec",
-      levels:[
-        { name:"Dead hang attivo (3x20\")", sets:3, reps:20, sets_label:"3 x 20 sec", rest:"60 sec", iso:true, tip:"Scapole verso basso e interno.", muscles:"Dorsali - Scapole", steps:["Dead hang braccia tese","Spingi scapole verso basso e interno","Senti il corpo salire leggermente","20 sec - base del front lever"], ytq:"active dead hang" },
-        { name:"Tuck front lever (3x3\")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"90 sec", iso:true, tip:"Ginocchia al petto, corpo orizzontale.", muscles:"Dorsali - Core", steps:["Appeso alla sbarra","Porta ginocchia al petto","Spingi spalle indietro e verso basso","Corpo orizzontale 3 sec"], ytq:"tuck front lever" },
-        { name:"Tuck front lever (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"90 sec", iso:true, tip:"5 sec tuck front lever.", muscles:"Dorsali - Core", steps:["Stessa posizione tuck front lever","5 sec corpo orizzontale","Ginocchia compatte al petto","Spingi forte le spalle indietro"], ytq:"tuck front lever 5 seconds" }
+  plank: { name:"Plank", color:"core",
+    phases:[
+      { name:"Fase 1 – Plank instabile", rest:60, levels:[
+        { name:"Plank su anelli (3×20\")", sets:3, reps:20, rest:60, iso:true },
+        { name:"Plank su anelli (3×30\")", sets:3, reps:30, rest:60, iso:true },
+        { name:"Plank su anelli (3×40\")", sets:3, reps:40, rest:60, iso:true }
       ]},
-    { id:2, name:"Fase 2", unlockReq:"3x5 tuck front lever",
-      levels:[
-        { name:"Tuck front lever (3x10\")", sets:3, reps:10, sets_label:"3 x 10 sec", rest:"2 min", iso:true, tip:"10 sec tuck front lever.", muscles:"Dorsali - Core", steps:["Tuck front lever corpo orizzontale","10 sec resistenza aumenta","Mantieni spinta spalle","Respira regolarmente"], ytq:"tuck front lever 10 seconds" },
-        { name:"Advanced tuck front lever (3x3\")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"2 min", iso:true, tip:"Ginocchia piu estese.", muscles:"Dorsali - Core", steps:["Tuck ma ginocchia leggermente estese","Schiena piatta - non inarcare","Momento di forza maggiore sui dorsali","3 sec"], ytq:"advanced tuck front lever" },
-        { name:"Advanced tuck front lever (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"2 min", iso:true, tip:"5 sec ginocchia piu estese.", muscles:"Dorsali - Core", steps:["Advanced tuck ginocchia estese","Corpo orizzontale schiena piatta","5 sec","Spingi le spalle piu indietro del tuck"], ytq:"advanced tuck front lever 5 sec" }
+      { name:"Fase 2 – Plank dinamico", rest:60, levels:[
+        { name:"Plank shoulder tap anelli (3×10)", sets:3, reps:10, rest:60 },
+        { name:"Plank spider anelli (3×8)", sets:3, reps:8, rest:60 },
+        { name:"Pike push-up anelli (3×5)", sets:3, reps:5, rest:90 }
       ]},
-    { id:3, name:"Fase 3", unlockReq:"3x5 advanced tuck front lever",
-      levels:[
-        { name:"Front lever 1 gamba tesa (3x3\")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"3 min", iso:true, tip:"Una gamba tesa, una piegata.", muscles:"Dorsali - Core elite", steps:["Advanced tuck una gamba tesa","Altra gamba piegata al petto","3 sec leva aumentata","Schiena assolutamente piatta"], ytq:"one leg front lever" },
-        { name:"Front lever 1 gamba tesa (3x5\")", sets:3, reps:5, sets_label:"3 x 5 sec", rest:"3 min", iso:true, tip:"5 sec una gamba tesa.", muscles:"Dorsali - Core", steps:["Una gamba tesa orizzontale","Altra piegata al petto","5 sec corpo orizzontale","Alterna la gamba tra le serie"], ytq:"one leg front lever 5 sec" },
-        { name:"Front lever completo (3x3\")", sets:3, reps:3, sets_label:"3 x 3 sec", rest:"3 min", iso:true, tip:"Entrambe le gambe tese - corpo orizzontale.", muscles:"Dorsali - Core maestria", steps:["Entrambe le gambe tese corpo orizzontale","Spingi spalle indietro con tutta la forza","Corpo parallelo al suolo testa inclusa","3 sec - uno degli obiettivi piu difficili"], ytq:"front lever complete" }
+      { name:"Fase 3 – Plank avanzato", rest:90, levels:[
+        { name:"Pike push-up anelli (3×8)", sets:3, reps:8, rest:90 },
+        { name:"Pike push-up anelli (3×10)", sets:3, reps:10, rest:90 },
+        { name:"Planche lean anelli (3×20\")", sets:3, reps:20, rest:90, iso:true }
       ]}
-  ]}
+    ]
+  },
+
+    squat: { name:"Squat", color:"legs",
+    phases:[
+      { name:"Fase 1 – Pistol squat", rest:120, levels:[
+        { name:"Pistol squat libero (3×5/gamba)", sets:3, reps:10, rest:120 },
+        { name:"Pistol squat libero (3×8/gamba)", sets:3, reps:16, rest:120 },
+        { name:"Goblet squat pesante KB (3×10)", sets:3, reps:10, rest:90 }
+      ]},
+      { name:"Fase 2 – Squat unilaterale pesante", rest:120, levels:[
+        { name:"Cossack squat (3×8/lato)", sets:3, reps:16, rest:120 },
+        { name:"Cossack squat con KB (3×8/lato)", sets:3, reps:16, rest:120 },
+        { name:"Pistol squat con KB (3×5/gamba)", sets:3, reps:10, rest:120 }
+      ]},
+      { name:"Fase 3 – Forza massima", rest:120, levels:[
+        { name:"Pistol squat con KB (3×8/gamba)", sets:3, reps:16, rest:120 },
+        { name:"Squat bulgaro KB (3×8/gamba)", sets:3, reps:16, rest:120 },
+        { name:"Squat bulgaro weighted (3×6/gamba)", sets:3, reps:12, rest:120 }
+      ]}
+    ]
+  },
+
+  lunge: { name:"Affondi", color:"legs",
+    phases:[
+      { name:"Fase 1 – Affondi unilaterali", rest:90, levels:[
+        { name:"Cossack squat (3×8/lato)", sets:3, reps:16, rest:90 },
+        { name:"Cossack squat profondo (3×10/lato)", sets:3, reps:20, rest:90 },
+        { name:"Affondo bulgaro KB (3×8/gamba)", sets:3, reps:16, rest:120 }
+      ]},
+      { name:"Fase 2 – Affondi pesanti", rest:120, levels:[
+        { name:"Affondo bulgaro pesante (3×6/gamba)", sets:3, reps:12, rest:120 },
+        { name:"Affondo bulgaro pesante (3×8/gamba)", sets:3, reps:16, rest:120 },
+        { name:"Step-up con KB (3×10/gamba)", sets:3, reps:20, rest:120 }
+      ]},
+      { name:"Fase 3 – Potenza gambe", rest:120, levels:[
+        { name:"Step-up esplosivo (3×8/gamba)", sets:3, reps:16, rest:120 },
+        { name:"Lunge jump (3×8/lato)", sets:3, reps:16, rest:120 },
+        { name:"Pistol squat con affondo (3×6/lato)", sets:3, reps:12, rest:120 }
+      ]}
+    ]
+  },
+
+  glutebridge: { name:"Glute & Posteriore coscia", color:"legs",
+    phases:[
+      { name:"Fase 1 – Nordic curl", rest:120, levels:[
+        { name:"Nordic curl (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Nordic curl (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Nordic curl (3×10)", sets:3, reps:10, rest:120 }
+      ]},
+      { name:"Fase 2 – RDL pesante", rest:120, levels:[
+        { name:"SL RDL KB 12kg (3×10/gamba)", sets:3, reps:20, rest:120 },
+        { name:"SL RDL KB+disco (3×8/gamba)", sets:3, reps:16, rest:120 },
+        { name:"Nordic curl pesante (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Hip thrust KB (3×12)", sets:3, reps:12, rest:90 },
+        { name:"Hip thrust KB pesante (3×10)", sets:3, reps:10, rest:120 }
+      ]},
+      { name:"Fase 3 – Forza posteriore", rest:120, levels:[
+        { name:"Nordic curl (3×12)", sets:3, reps:12, rest:120 },
+        { name:"SL RDL KB pesante (3×8/gamba)", sets:3, reps:16, rest:120 },
+        { name:"Good morning con KB (3×12)", sets:3, reps:12, rest:90 },
+        { name:"Nordic curl + hip thrust superset", sets:3, reps:8, rest:120 },
+        { name:"Nordic curl (3×15)", sets:3, reps:15, rest:120 }
+      ]}
+    ]
+  },
+
+  calfrise: { name:"Calf raise", color:"legs",
+    phases:[
+      { name:"Fase 1 – Calf 1 gamba", rest:60, levels:[
+        { name:"Calf raise 1 gamba su gradino (3×15/gamba)", sets:3, reps:30, rest:60 },
+        { name:"Calf raise 1 gamba su gradino (3×20/gamba)", sets:3, reps:40, rest:60 },
+        { name:"Calf raise 1 gamba KB (3×15/gamba)", sets:3, reps:30, rest:60 }
+      ]},
+      { name:"Fase 2 – Calf pesante", rest:90, levels:[
+        { name:"Calf raise 1 gamba KB+disco (3×15/gamba)", sets:3, reps:30, rest:90 },
+        { name:"Calf raise 1 gamba KB+disco (3×20/gamba)", sets:3, reps:40, rest:90 },
+        { name:"Calf raise esplosivo (3×10/gamba)", sets:3, reps:20, rest:90 }
+      ]},
+      { name:"Fase 3 – Calf avanzato", rest:90, levels:[
+        { name:"Calf raise isometrico picco (3×30\")", sets:3, reps:30, rest:60, iso:true },
+        { name:"Calf raise pistol (3×10/gamba)", sets:3, reps:20, rest:90 },
+        { name:"Jump squat con enfasi calf (3×10)", sets:3, reps:10, rest:90 }
+      ]}
+    ]
+  },
+
+  wallsit: { name:"Wall sit", color:"legs",
+    phases:[
+      { name:"Fase 1 – Wall sit resistenza", rest:90, levels:[
+        { name:"Wall sit (3×90\")", sets:3, reps:90, rest:90, iso:true },
+        { name:"Wall sit (3×2 min)", sets:3, reps:120, rest:90, iso:true },
+        { name:"Wall sit con calf raise (3×45\")", sets:3, reps:45, rest:90, iso:true }
+      ]},
+      { name:"Fase 2 – Wall sit dinamico", rest:90, levels:[
+        { name:"Wall sit pulse (3×20)", sets:3, reps:20, rest:90 },
+        { name:"Wall sit con leg lift alternato (3×15)", sets:3, reps:15, rest:90 },
+        { name:"Wall sit isometrico profondo (3×60\")", sets:3, reps:60, rest:90, iso:true }
+      ]},
+      { name:"Fase 3 – Wall sit avanzato", rest:90, levels:[
+        { name:"Wall sit con KB (3×45\")", sets:3, reps:45, rest:90, iso:true },
+        { name:"Squat isometrico 90° (3×60\")", sets:3, reps:60, rest:90, iso:true },
+        { name:"Pistol squat isometrico (3×20\"/gamba)", sets:3, reps:20, rest:90, iso:true }
+      ]}
+    ]
+  },
+
+  crunch: { name:"Crunch & Core", color:"core",
+    phases:[
+      { name:"Fase 1 – Hanging core", rest:60, levels:[
+        { name:"Hanging knee raise (3×10)", sets:3, reps:10, rest:60 },
+        { name:"Hanging knee raise (3×15)", sets:3, reps:15, rest:60 },
+        { name:"Hanging knee raise pausa (3×8)", sets:3, reps:8, rest:60 },
+        { name:"Hanging leg raise (3×6)", sets:3, reps:6, rest:90 },
+        { name:"Hanging leg raise (3×10)", sets:3, reps:10, rest:90 }
+      ]},
+      { name:"Fase 2 – Toes to bar", rest:90, levels:[
+        { name:"Toes to bar (3×5)", sets:3, reps:5, rest:90 },
+        { name:"Toes to bar (3×8)", sets:3, reps:8, rest:90 },
+        { name:"Toes to bar (3×10)", sets:3, reps:10, rest:90 },
+        { name:"Toes to bar pausa (3×6)", sets:3, reps:6, rest:90 },
+        { name:"L-hang (3×10\")", sets:3, reps:10, rest:90, iso:true }
+      ]},
+      { name:"Fase 3 – Core avanzato", rest:90, levels:[
+        { name:"V-up (3×12)", sets:3, reps:12, rest:90 },
+        { name:"V-up (3×15)", sets:3, reps:15, rest:90 },
+        { name:"Dragon flag negativo (3×4)", sets:3, reps:4, rest:120 },
+        { name:"Dragon flag negativo (3×6)", sets:3, reps:6, rest:120 },
+        { name:"Dragon flag (3×4)", sets:3, reps:4, rest:120 }
+      ]}
+    ]
+  },
+
+  reversecrunch: { name:"Reverse crunch", color:"core",
+    phases:[
+      { name:"Fase 1 – Leg raise", rest:60, levels:[
+        { name:"Toes to bar (3×8)", sets:3, reps:8, rest:90 },
+        { name:"Toes to bar (3×12)", sets:3, reps:12, rest:90 },
+        { name:"Toes to bar pausa (3×8)", sets:3, reps:8, rest:90 }
+      ]},
+      { name:"Fase 2 – Core avanzato", rest:90, levels:[
+        { name:"L-hang (3×15\")", sets:3, reps:15, rest:90, iso:true },
+        { name:"Windshield wiper (3×5/lato)", sets:3, reps:10, rest:90 },
+        { name:"Windshield wiper (3×8/lato)", sets:3, reps:16, rest:90 }
+      ]},
+      { name:"Fase 3 – Dragon flag", rest:120, levels:[
+        { name:"Dragon flag negativo (3×4)", sets:3, reps:4, rest:120 },
+        { name:"Dragon flag negativo (3×6)", sets:3, reps:6, rest:120 },
+        { name:"Dragon flag (3×3)", sets:3, reps:3, rest:120 }
+      ]}
+    ]
+  },
+
+  mountainclimber: { name:"Mountain climber", color:"core",
+    phases:[
+      { name:"Fase 1 – Velocità e resistenza", rest:60, levels:[
+        { name:"Mountain climbers (4×40\")", sets:4, reps:40, rest:60, iso:true },
+        { name:"Mountain climbers (4×50\")", sets:4, reps:50, rest:60, iso:true },
+        { name:"Mountain climbers (4×60\")", sets:4, reps:60, rest:60, iso:true }
+      ]},
+      { name:"Fase 2 – Varianti", rest:60, levels:[
+        { name:"Cross body mountain climber (3×30\")", sets:3, reps:30, rest:60, iso:true },
+        { name:"Cross body mountain climber (3×45\")", sets:3, reps:45, rest:60, iso:true },
+        { name:"Mountain climber su anelli (3×20\")", sets:3, reps:20, rest:90, iso:true }
+      ]},
+      { name:"Fase 3 – HIIT avanzato", rest:60, levels:[
+        { name:"Mountain climber su anelli (3×30\")", sets:3, reps:30, rest:60, iso:true },
+        { name:"Spider-man push-up (3×8)", sets:3, reps:8, rest:90 },
+        { name:"Spider-man push-up (3×12)", sets:3, reps:12, rest:90 }
+      ]}
+    ]
+  },
+
+  hollowbody: { name:"Hollow body", color:"core",
+    phases:[
+      { name:"Fase 1 – Hollow rocks", rest:60, levels:[
+        { name:"Hollow rocks (3×20)", sets:3, reps:20, rest:60 },
+        { name:"Hollow rocks (3×25)", sets:3, reps:25, rest:60 },
+        { name:"Hollow body hold (3×45\")", sets:3, reps:45, rest:60, iso:true },
+        { name:"Hollow body hold (3×60\")", sets:3, reps:60, rest:60, iso:true }
+      ]},
+      { name:"Fase 2 – Compressione", rest:90, levels:[
+        { name:"Tuck compression (3×10\")", sets:3, reps:10, rest:60, iso:true },
+        { name:"Tuck compression (3×20\")", sets:3, reps:20, rest:60, iso:true },
+        { name:"L-sit tuck (3×10\")", sets:3, reps:10, rest:90, iso:true },
+        { name:"L-sit tuck (3×20\")", sets:3, reps:20, rest:90, iso:true }
+      ]},
+      { name:"Fase 3 – L-sit", rest:90, levels:[
+        { name:"L-sit 1 gamba (3×10\")", sets:3, reps:10, rest:90, iso:true },
+        { name:"L-sit 1 gamba (3×15\")", sets:3, reps:15, rest:90, iso:true },
+        { name:"L-sit completo (3×5\")", sets:3, reps:5, rest:90, iso:true },
+        { name:"L-sit completo (3×10\")", sets:3, reps:10, rest:90, iso:true }
+      ]}
+    ]
+  },
+
+  superman: { name:"Superman", color:"core",
+    phases:[
+      { name:"Fase 1 – Superman hold", rest:60, levels:[
+        { name:"Superman hold (3×30\")", sets:3, reps:30, rest:60, iso:true },
+        { name:"Superman hold (3×45\")", sets:3, reps:45, rest:60, iso:true },
+        { name:"Superman con rotazione (3×10)", sets:3, reps:10, rest:60 }
+      ]},
+      { name:"Fase 2 – Back extension", rest:90, levels:[
+        { name:"Back extension su sedia (3×15)", sets:3, reps:15, rest:60 },
+        { name:"Good morning KB (3×12)", sets:3, reps:12, rest:90 },
+        { name:"Good morning KB (3×15)", sets:3, reps:15, rest:90 }
+      ]},
+      { name:"Fase 3 – Schiena pesante", rest:90, levels:[
+        { name:"Good morning KB pesante (3×10)", sets:3, reps:10, rest:90 },
+        { name:"Romanian deadlift KB (3×10)", sets:3, reps:10, rest:90 },
+        { name:"Romanian deadlift KB pesante (3×8)", sets:3, reps:8, rest:120 }
+      ]}
+    ]
+  },
+
+  sideplank: { name:"Plank laterale", color:"core",
+    phases:[
+      { name:"Fase 1 – Side plank resistenza", rest:60, levels:[
+        { name:"Side plank (3×45\"/lato)", sets:3, reps:45, rest:60, iso:true, sides:2 },
+        { name:"Side plank (3×60\"/lato)", sets:3, reps:60, rest:60, iso:true, sides:2 },
+        { name:"Side plank con rotazione (3×10/lato)", sets:3, reps:10, rest:60, sides:2 }
+      ]},
+      { name:"Fase 2 – Side plank dinamico", rest:60, levels:[
+        { name:"Side plank con alzata gamba (3×10/lato)", sets:3, reps:10, rest:60, sides:2 },
+        { name:"Side plank con alzata gamba (3×15/lato)", sets:3, reps:15, rest:60, sides:2 },
+        { name:"Star plank (3×20\"/lato)", sets:3, reps:20, rest:90, iso:true, sides:2 }
+      ]},
+      { name:"Fase 3 – Side plank avanzato", rest:90, levels:[
+        { name:"Star plank (3×30\"/lato)", sets:3, reps:30, rest:90, iso:true, sides:2 },
+        { name:"Side plank su mano con rotazione (3×8/lato)", sets:3, reps:8, rest:90, sides:2 },
+        { name:"Copenhagen plank (3×15\"/lato)", sets:3, reps:15, rest:90, iso:true, sides:2 }
+      ]}
+    ]
+  },
+
+  invertedrow: { name:"Inverted row", color:"pull",
+    phases:[
+      { name:"Fase 1 – Ring row", rest:120, levels:[
+        { name:"Ring row (3×10)", sets:3, reps:10, rest:120 },
+        { name:"Ring row (3×12)", sets:3, reps:12, rest:120 },
+        { name:"Ring row pausa 2sec (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Ring row piedi elevati (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Ring row piedi elevati (3×10)", sets:3, reps:10, rest:120 }
+      ]},
+      { name:"Fase 2 – Verso le trazioni", rest:120, levels:[
+        { name:"Chin-up negativo lento 5sec (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Chin-up negativo lento 5sec (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Chin-up assistito piede sedia (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Chin-up assistito piede sedia (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Chin-up elastico leggero (3×3)", sets:3, reps:3, rest:120 }
+      ]},
+      { name:"Fase 3 – Pull-up", rest:120, levels:[
+        { name:"Chin-up elastico leggero (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Chin-up (3×1)", sets:3, reps:1, rest:120 },
+        { name:"Chin-up (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Pull-up (3×1)", sets:3, reps:1, rest:120 },
+        { name:"Pull-up (3×3)", sets:3, reps:3, rest:120 }
+      ]}
+    ]
+  },
+
+  doorframerow: { name:"Doorframe row", color:"pull",
+    phases:[
+      { name:"Fase 1 – Row avanzato", rest:120, levels:[
+        { name:"Doorframe row inclinato (3×10)", sets:3, reps:10, rest:90 },
+        { name:"Doorframe row inclinato (3×15)", sets:3, reps:15, rest:90 },
+        { name:"Doorframe row 1 braccio (3×8/lato)", sets:3, reps:8, rest:120, sides:2 },
+        { name:"Doorframe row 1 braccio (3×10/lato)", sets:3, reps:10, rest:120, sides:2 }
+      ]},
+      { name:"Fase 2 – Trazioni elastico", rest:120, levels:[
+        { name:"Trazioni elastico doppio (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Trazioni elastico doppio (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Trazioni elastico singolo (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Trazioni elastico singolo (3×5)", sets:3, reps:5, rest:120 }
+      ]},
+      { name:"Fase 3 – Pull-up", rest:120, levels:[
+        { name:"Trazioni elastico leggero (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Pull-up (3×1)", sets:3, reps:1, rest:120 },
+        { name:"Pull-up (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Pull-up (3×5)", sets:3, reps:5, rest:120 }
+      ]}
+    ]
+  },
+
+  supermanvol: { name:"Schiena volume", color:"pull",
+    phases:[
+      { name:"Fase 1 – Volume schiena", rest:60, levels:[
+        { name:"Doorframe row 1 braccio (3×10/lato)", sets:3, reps:10, rest:90, sides:2 },
+        { name:"Doorframe row 1 braccio (3×12/lato)", sets:3, reps:12, rest:90, sides:2 },
+        { name:"Superman volume disco (4×12)", sets:4, reps:12, rest:60 }
+      ]},
+      { name:"Fase 2 – Iper estensioni", rest:90, levels:[
+        { name:"Superman volume disco (4×15)", sets:4, reps:15, rest:60 },
+        { name:"Back extension su sedia con disco (3×12)", sets:3, reps:12, rest:90 },
+        { name:"Good morning KB volume (4×12)", sets:4, reps:12, rest:60 }
+      ]},
+      { name:"Fase 3 – Schiena pesante", rest:90, levels:[
+        { name:"Good morning KB pesante (4×10)", sets:4, reps:10, rest:90 },
+        { name:"Romanian deadlift KB (4×10)", sets:4, reps:10, rest:90 },
+        { name:"Romanian deadlift KB pesante (4×8)", sets:4, reps:8, rest:120 }
+      ]}
+    ]
+  },
+
+  towelcurl: { name:"Bicipiti & Trazione", color:"pull",
+    phases:[
+      { name:"Fase 1 – Chin-up negativo", rest:120, levels:[
+        { name:"Chin-up negativo lento 5sec (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Chin-up negativo lento 5sec (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Chin-up assistito piede sedia (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Chin-up assistito piede sedia (3×8)", sets:3, reps:8, rest:120 }
+      ]},
+      { name:"Fase 2 – Chin-up elastico", rest:120, levels:[
+        { name:"Chin-up elastico doppio (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Chin-up elastico doppio (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Chin-up elastico singolo (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Chin-up elastico singolo (3×5)", sets:3, reps:5, rest:120 }
+      ]},
+      { name:"Fase 3 – Chin-up libero", rest:120, levels:[
+        { name:"Chin-up elastico leggero (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Chin-up (3×1)", sets:3, reps:1, rest:120 },
+        { name:"Chin-up (3×3)", sets:3, reps:3, rest:120 },
+        { name:"Chin-up (3×5)", sets:3, reps:5, rest:120 }
+      ]}
+    ]
+  },
+
+  burpee: { name:"Burpee", color:"full",
+    phases:[
+      { name:"Fase 1 – Burpee pesante", rest:120, levels:[
+        { name:"Burpee man-maker KB (3×6)", sets:3, reps:6, rest:120 },
+        { name:"Burpee man-maker KB (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Burpee man-maker KB (3×10)", sets:3, reps:10, rest:120 }
+      ]},
+      { name:"Fase 2 – Burpee esplosivo", rest:120, levels:[
+        { name:"Burpee box jump (3×6)", sets:3, reps:6, rest:120 },
+        { name:"Burpee box jump (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Burpee con flessione lenta (3×8)", sets:3, reps:8, rest:120 }
+      ]},
+      { name:"Fase 3 – Condizionamento massimo", rest:120, levels:[
+        { name:"Burpee man-maker doppio KB (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Burpee pull-up (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Burpee pull-up (3×8)", sets:3, reps:8, rest:120 }
+      ]}
+    ]
+  },
+
+  fullsquat: { name:"Squat profondo", color:"full",
+    phases:[
+      { name:"Fase 1 – Thruster pesante", rest:120, levels:[
+        { name:"Thruster KB+disco (3×10)", sets:3, reps:10, rest:120 },
+        { name:"Thruster KB+disco (3×12)", sets:3, reps:12, rest:120 },
+        { name:"Thruster doppio KB (3×8)", sets:3, reps:8, rest:120 }
+      ]},
+      { name:"Fase 2 – Squat jump pesante", rest:120, levels:[
+        { name:"Goblet squat jump (3×8)", sets:3, reps:8, rest:120 },
+        { name:"Goblet squat jump (3×10)", sets:3, reps:10, rest:120 },
+        { name:"Squat bulgaro jump (3×6/gamba)", sets:3, reps:12, rest:120 }
+      ]},
+      { name:"Fase 3 – Forza esplosiva", rest:120, levels:[
+        { name:"Squat bulgaro jump KB (3×6/gamba)", sets:3, reps:12, rest:120 },
+        { name:"Pistol squat jump (3×5/gamba)", sets:3, reps:10, rest:120 },
+        { name:"Pistol squat jump KB (3×4/gamba)", sets:3, reps:8, rest:120 }
+      ]}
+    ]
+  },
+
+  inchworm: { name:"Inchworm & Mobilità", color:"full",
+    phases:[
+      { name:"Fase 1 – Inchworm + HSPU", rest:120, levels:[
+        { name:"Inchworm + HSPU muro (3×4)", sets:3, reps:4, rest:120 },
+        { name:"Inchworm + HSPU muro (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Inchworm + HSPU muro (3×6)", sets:3, reps:6, rest:120 }
+      ]},
+      { name:"Fase 2 – Inchworm pesante", rest:120, levels:[
+        { name:"Inchworm + pike push-up (3×6)", sets:3, reps:6, rest:120 },
+        { name:"Inchworm + archer push-up (3×4)", sets:3, reps:4, rest:120 },
+        { name:"Bear crawl + push-up (3×5)", sets:3, reps:5, rest:120 }
+      ]},
+      { name:"Fase 3 – Mobilità avanzata", rest:120, levels:[
+        { name:"Inchworm + pseudo planche (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Handstand walk attempt (3×10 passi)", sets:3, reps:10, rest:120 },
+        { name:"Cartwheel + handstand hold (3×10\")", sets:3, reps:10, rest:120, iso:true }
+      ]}
+    ]
+  },
+
+  amrap: { name:"AMRAP", color:"full",
+    phases:[
+      { name:"Fase 1 – AMRAP intermedio", rest:180, levels:[
+        { name:"AMRAP 12 min (10+10+10)", sets:1, reps:12, rest:180 },
+        { name:"AMRAP 12 min (12+12+12)", sets:1, reps:12, rest:180 },
+        { name:"AMRAP 15 min (10+10+10+10)", sets:1, reps:15, rest:180 }
+      ]},
+      { name:"Fase 2 – AMRAP avanzato", rest:180, levels:[
+        { name:"AMRAP 15 min KB (10+10+10+10)", sets:1, reps:15, rest:180 },
+        { name:"AMRAP 20 min (8+8+8+8)", sets:1, reps:20, rest:180 },
+        { name:"AMRAP 20 min KB pesante (6+6+6+6)", sets:1, reps:20, rest:180 }
+      ]},
+      { name:"Fase 3 – AMRAP competitivo", rest:180, levels:[
+        { name:"AMRAP 20 min full body (5 esercizi)", sets:1, reps:20, rest:180 },
+        { name:"AMRAP 25 min (5 esercizi + KB)", sets:1, reps:25, rest:180 },
+        { name:"AMRAP 30 min max (6 esercizi)", sets:1, reps:30, rest:180 }
+      ]}
+    ]
+  },
+
+  lsit: { name:"L-sit", color:"full",
+    phases:[
+      { name:"Fase 1 – L-sit progressioni", rest:90, levels:[
+        { name:"L-sit sollevamento (3×8\")", sets:3, reps:8, rest:60, iso:true },
+        { name:"L-sit tuck (3×10\")", sets:3, reps:10, rest:90, iso:true },
+        { name:"L-sit tuck (3×20\")", sets:3, reps:20, rest:90, iso:true },
+        { name:"L-sit 1 gamba (3×8\"/lato)", sets:3, reps:8, rest:90, iso:true }
+      ]},
+      { name:"Fase 2 – L-sit completo", rest:90, levels:[
+        { name:"L-sit 1 gamba (3×15\"/lato)", sets:3, reps:15, rest:90, iso:true },
+        { name:"L-sit completo (3×5\")", sets:3, reps:5, rest:90, iso:true },
+        { name:"L-sit completo (3×10\")", sets:3, reps:10, rest:90, iso:true },
+        { name:"L-sit completo (3×15\")", sets:3, reps:15, rest:90, iso:true }
+      ]},
+      { name:"Fase 3 – V-sit", rest:120, levels:[
+        { name:"L-sit su anelli (3×10\")", sets:3, reps:10, rest:90, iso:true },
+        { name:"L-sit su anelli (3×20\")", sets:3, reps:20, rest:90, iso:true },
+        { name:"V-sit attempt (3×5\")", sets:3, reps:5, rest:120, iso:true }
+      ]}
+    ]
+  },
+
+  planche: { name:"Planche", color:"push",
+    phases:[
+      { name:"Fase 1 – Planche lean", rest:90, levels:[
+        { name:"Planche lean (3×20\")", sets:3, reps:20, rest:60, iso:true },
+        { name:"Planche lean (3×30\")", sets:3, reps:30, rest:60, iso:true },
+        { name:"Planche lean avanzato (3×20\")", sets:3, reps:20, rest:90, iso:true },
+        { name:"Tuck planche (3×5\")", sets:3, reps:5, rest:90, iso:true }
+      ]},
+      { name:"Fase 2 – Tuck planche", rest:90, levels:[
+        { name:"Tuck planche (3×10\")", sets:3, reps:10, rest:90, iso:true },
+        { name:"Tuck planche (3×15\")", sets:3, reps:15, rest:90, iso:true },
+        { name:"Advanced tuck planche (3×5\")", sets:3, reps:5, rest:120, iso:true },
+        { name:"Advanced tuck planche (3×10\")", sets:3, reps:10, rest:120, iso:true }
+      ]},
+      { name:"Fase 3 – Straddle planche", rest:120, levels:[
+        { name:"Straddle planche attempt (3×3\")", sets:3, reps:3, rest:120, iso:true },
+        { name:"Straddle planche (3×5\")", sets:3, reps:5, rest:120, iso:true },
+        { name:"Straddle planche (3×10\")", sets:3, reps:10, rest:120, iso:true }
+      ]}
+    ]
+  },
+
+  frontlever: { name:"Front lever", color:"pull",
+    phases:[
+      { name:"Fase 1 – Progressioni base", rest:120, levels:[
+        { name:"Inverted hang (3×10\")", sets:3, reps:10, rest:90, iso:true },
+        { name:"Inverted hang (3×20\")", sets:3, reps:20, rest:90, iso:true },
+        { name:"Tuck front lever (3×5\")", sets:3, reps:5, rest:120, iso:true },
+        { name:"Tuck front lever (3×10\")", sets:3, reps:10, rest:120, iso:true }
+      ]},
+      { name:"Fase 2 – Advanced tuck", rest:120, levels:[
+        { name:"Advanced tuck front lever (3×5\")", sets:3, reps:5, rest:120, iso:true },
+        { name:"Advanced tuck front lever (3×10\")", sets:3, reps:10, rest:120, iso:true },
+        { name:"Front lever negativo (3×5)", sets:3, reps:5, rest:120 },
+        { name:"Tuck front lever row (3×5)", sets:3, reps:5, rest:120 }
+      ]},
+      { name:"Fase 3 – Front lever", rest:120, levels:[
+        { name:"Straddle front lever (3×3\")", sets:3, reps:3, rest:120, iso:true },
+        { name:"Straddle front lever (3×5\")", sets:3, reps:5, rest:120, iso:true },
+        { name:"Front lever (3×3\")", sets:3, reps:3, rest:120, iso:true }
+      ]}
+    ]
+  }
 };
 
 // ─── SUGGESTED ─────────────────────────────────────────────
